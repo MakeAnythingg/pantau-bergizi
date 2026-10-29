@@ -4,6 +4,8 @@ Rapor harian per dapur Makan Bergizi Gratis (MBG) dari pengalaman penerimanya. S
 
 Karya untuk **Web In Action — Multimedia In Action (MIA) 2026**. Subtema utama: Civic Reporting & Accountability, didampingi Public Service Tracking.
 
+**Demo langsung:** https://pantau-bergizi.vercel.app
+
 > **Data simulasi.** Semua dapur, sekolah, laporan, dan menu di "Kota Sukamaju" adalah SIMULASI. Pantau Bergizi adalah platform sipil independen, bukan sistem resmi BGN.
 
 ## Tech stack
