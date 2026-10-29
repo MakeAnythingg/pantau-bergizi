@@ -1,14 +1,14 @@
 import { eq } from "drizzle-orm";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { sppg } from "@/db/schema";
 import { requireRole } from "@/lib/session";
 
 async function Dashboard() {
   const session = await requireRole("moderator", "sppg_manager");
   const kitchen = session.sppgId
-    ? await db.query.sppg.findFirst({ where: eq(sppg.id, session.sppgId) })
+    ? await getDb().query.sppg.findFirst({ where: eq(sppg.id, session.sppgId) })
     : undefined;
   return (
     <div className="flex items-center justify-between gap-4">

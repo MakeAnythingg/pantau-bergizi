@@ -16,19 +16,22 @@ function prng(seedText: string) {
   };
 }
 
+const BATCH_SPREAD_MS = 30 * 60 * 1000;
+
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 /**
  * Simulated reports for one WIB day, shaped so each school's SPPG lands in its profile's status.
- * received_at falls in lunch hours (10–16 WIB) clamped to `until`; if `until` is before 10:00,
+ * received_at falls in the 30 minutes before the end of lunch hours (10–16 WIB) clamped to `until`, so a
+ * daily top-up's batch stays inside the 24h signal window until the next run. If `until` is before 10:00,
  * it falls between midnight and `until` instead. Nothing is generated after `until`.
  */
 export function simulateDay({ day, until, schools }: { day: string; until: Date; schools: SimSchool[] }): NewReport[] {
   const dayStart = wibTime(day);
   if (until <= dayStart) return [];
   const lunchStart = wibTime(day, 10);
-  const from = until > lunchStart ? lunchStart : dayStart;
   const to = new Date(Math.min(until.getTime(), wibTime(day, 16).getTime()));
+  const from = until > lunchStart ? new Date(Math.max(lunchStart.getTime(), to.getTime() - BATCH_SPREAD_MS)) : dayStart;
 
   const rows: NewReport[] = [];
   const healthCountBySppg = new Map<number, number>();

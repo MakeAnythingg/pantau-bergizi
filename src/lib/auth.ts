@@ -50,6 +50,12 @@ export function verifySession(token: string, secret: string, nowSec = Math.floor
   }
 }
 
+/** Re-checks a verified session against the account, so deleting or changing an account revokes its sessions. */
+export async function currentSession(db: Db, s: Session): Promise<Session | null> {
+  const found = await db.query.user.findFirst({ where: eq(user.id, s.uid) });
+  return found && found.role === s.role && found.sppgId === s.sppgId ? s : null;
+}
+
 export async function authenticate(db: Db, email: string, password: string): Promise<Omit<Session, "exp"> | null> {
   const found = await db.query.user.findFirst({ where: eq(user.email, email.trim().toLowerCase()) });
   if (!found || !(await verifyPassword(password, found.passwordHash))) return null;

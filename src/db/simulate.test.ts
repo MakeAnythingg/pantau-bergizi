@@ -64,3 +64,11 @@ test("never generates received_at after `until`", () => {
   expect(early.length).toBeGreaterThan(0);
   for (const r of early) expect(r.receivedAt!.getTime()).toBeLessThanOrEqual(until.getTime());
 });
+
+test("a midday top-up clusters reports in the 30 minutes before `until`", () => {
+  const until = new Date("2026-10-30T12:40:00+07:00");
+  const rows = simulateDay({ day: "2026-10-30", until, schools });
+  for (const r of rows) {
+    expect(until.getTime() - r.receivedAt!.getTime()).toBeLessThanOrEqual(30 * 60 * 1000);
+  }
+});

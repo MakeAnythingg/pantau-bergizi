@@ -1,9 +1,10 @@
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { assertResetAllowed, resetDb } from "@/db/seed";
-import { env } from "@/lib/env";
+import { getEnv } from "@/lib/env";
 
-assertResetAllowed(env.DEMO_MODE, process.argv);
-console.log(`Resetting ${new URL(env.DATABASE_URL).host}`);
+assertResetAllowed(getEnv().DEMO_MODE, process.argv);
+console.log(`Resetting ${new URL(getEnv().DATABASE_URL).host}`);
+const db = getDb();
 await resetDb(db);
 console.log("Done.");
 await db.$client.end();
