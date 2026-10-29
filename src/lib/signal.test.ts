@@ -98,3 +98,11 @@ test("average rating below 3 needs at least 5 rated reports", () => {
   expect(s.status).toBe("attention");
   expect(s.reason).toBe("Rata-rata nilai 2,2 dari 5 laporan.");
 });
+
+test("a reviewed teacher group report wins over a newer unreviewed one", () => {
+  const group = { reporterRole: "teacher" as const, subject: "group" as const, affectedCount: 8 };
+  const unreviewed = health({ ...group, schoolName: "SDN B" });
+  const reviewed = health({ ...group, status: "reviewed" });
+  expect(computeSignal([unreviewed, reviewed]).status).toBe("priority");
+  expect(computeSignal([reviewed, unreviewed]).status).toBe("priority");
+});

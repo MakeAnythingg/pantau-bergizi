@@ -1,5 +1,7 @@
 import { beforeAll, expect, test } from "bun:test";
+import { eq } from "drizzle-orm";
 import { getBoard, getRapor, searchSchools } from "./board";
+import { report, school } from "./schema";
 import { seed } from "./seed";
 import { getTestDb, truncateAll } from "./test-db";
 
@@ -60,4 +62,27 @@ test("school search matches names and treats % literally", async () => {
   const db = await getTestDb();
   expect((await searchSchools(db, "harapan")).map((s) => s.name)).toEqual(["SDN Harapan 1", "SMPN Harapan 2"]);
   expect(await searchSchools(db, "%")).toEqual([]);
+});
+
+test("reports about meals eaten long ago don't drive today's status", async () => {
+  const db = await getTestDb();
+  const dahlia = (await getBoard(db, now)).at(-1);
+  const schools = await db.select().from(school).where(eq(school.sppgId, dahlia?.id ?? 0));
+  await db.insert(report).values(
+    [0, 0, 1].map((i, n) => ({
+      schoolId: schools[i].id,
+      reporterRole: "parent" as const,
+      kind: "health" as const,
+      consumedOn: "2026-10-15",
+      receivedAt: new Date(now.getTime() - 3_600_000),
+      symptoms: ["nausea" as const],
+      subject: "self" as const,
+      locationCheck: "inside" as const,
+      tokenHash: `old-${n}`,
+      deviceHash: `old-${n}`,
+      ipHash: "old",
+    })),
+  );
+  expect((await getBoard(db, now)).at(-1)?.signal.status).toBe("no_data");
+  expect((await getRapor(db, dahlia?.id ?? 0, now))?.signal.status).toBe("no_data");
 });

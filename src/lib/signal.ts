@@ -64,9 +64,10 @@ export function computeSignal(all: SignalReport[]): Signal {
     };
   }
 
-  const group = health.find(
+  const groups = health.filter(
     (r) => r.reporterRole === "teacher" && r.subject === "group" && (r.affectedCount ?? 0) >= TEACHER_GROUP_MIN_AFFECTED,
   );
+  const group = groups.find((r) => REVIEWED.has(r.status)) ?? groups[0];
   const groupReason = group && `Laporan guru ${group.schoolName}: perkiraan ${group.affectedCount} terdampak`;
   if (group && REVIEWED.has(group.status)) {
     return { status: "priority", reason: `${groupReason}.`, label: "Ditinjau moderator" };

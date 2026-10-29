@@ -12,6 +12,13 @@ const LATEST_LIMIT = 8;
 
 const windowStart = (now: Date) => new Date(now.getTime() - SIGNAL_WINDOW_HOURS * 3_600_000);
 
+/** Today's signal uses reports received in the window about a meal from today or yesterday (PRD F2). */
+const feedsSignal = (now: Date) => {
+  const since = windowStart(now);
+  const oldestMeal = addDays(todayWIB(now), -1);
+  return (r: Pick<Row, "receivedAt" | "consumedOn">) => r.receivedAt >= since && r.consumedOn >= oldestMeal;
+};
+
 const reportFields = {
   id: report.id,
   schoolId: report.schoolId,
@@ -53,9 +60,10 @@ export async function getBoard(db: Db, now: Date) {
     db.select({ id: school.id, sppgId: school.sppgId }).from(school),
     reportsSince(db, windowStart(now)),
   ]);
+  const inSignal = feedsSignal(now);
   return kitchens
     .map((k) => {
-      const own = rows.filter((r) => r.sppgId === k.id);
+      const own = rows.filter((r) => r.sppgId === k.id && inSignal(r));
       return {
         ...k,
         signal: computeSignal(own),
@@ -94,7 +102,7 @@ export async function getRapor(db: Db, sppgId: number, now: Date) {
   ]);
 
   const counted = rows.filter(counts);
-  const inWindow = rows.filter((r) => r.receivedAt >= windowStart(now));
+  const inWindow = rows.filter(feedsSignal(now));
   const reported = reportedSchools(inWindow);
 
   const ratedToday = counted.filter((r) => r.consumedOn === today && r.rating !== null);
