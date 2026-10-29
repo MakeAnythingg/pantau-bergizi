@@ -14,6 +14,7 @@ import {
   unique,
   varchar,
 } from "drizzle-orm/pg-core";
+import { NOTE_MAX_CHARS } from "@/lib/thresholds";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
 const createdNow = () => timestamp({ withTimezone: true }).notNull().defaultNow();
@@ -86,7 +87,7 @@ export const report = pgTable(
     symptoms: symptomEnum().array().notNull().default([]),
     subject: subjectEnum(),
     affectedCount: integer(),
-    note: varchar({ length: 300 }),
+    note: varchar({ length: NOTE_MAX_CHARS }),
     locationCheck: locationCheckEnum().notNull(),
     status: reportStatusEnum().notNull().default("received"),
     rejectReason: text(),

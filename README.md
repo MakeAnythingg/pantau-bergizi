@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pantau Bergizi
 
-## Getting Started
+Rapor harian per dapur Makan Bergizi Gratis (MBG) dari pengalaman penerimanya. Siswa, guru, dan orang tua melapor lewat QR sekolah tanpa akun, dan laporan mereka menjadi sinyal dini per dapur yang dijawab secara publik oleh pengelola dapur.
 
-First, run the development server:
+Karya untuk **Web In Action — Multimedia In Action (MIA) 2026**. Subtema utama: Civic Reporting & Accountability, didampingi Public Service Tracking.
+
+> **Data simulasi.** Semua dapur, sekolah, laporan, dan menu di "Kota Sukamaju" adalah SIMULASI. Pantau Bergizi adalah platform sipil independen, bukan sistem resmi BGN.
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org) (App Router, Server Actions) + TypeScript + React 19
+- Tailwind CSS 4 + [shadcn/ui](https://ui.shadcn.com) + [Phosphor Icons](https://phosphoricons.com)
+- PostgreSQL ([Neon](https://neon.com) di produksi) + [Drizzle ORM](https://orm.drizzle.team)
+- Login petugas: cookie bertanda tangan (HMAC) + scrypt, tanpa penyedia auth eksternal
+- [Bun](https://bun.sh) untuk instalasi, skrip, dan tes
+- Deploy di [Vercel](https://vercel.com)
+
+## Cara menjalankan
+
+Butuh [Bun](https://bun.sh) dan PostgreSQL lokal (mis. [Postgres.app](https://postgresapp.com)).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+git clone https://github.com/MakeAnythingg/pantau-bergizi.git
+cd pantau-bergizi
+bun install
+cp .env.example .env          # sesuaikan DATABASE_URL bila perlu
+createdb pantau_bergizi
+bun run db:migrate
+bun run db:seed
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Akun demo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Kata sandi semua akun: `demo1234` (juga tertulis di halaman `/masuk`).
 
-## Learn More
+| Email | Peran |
+|---|---|
+| `moderator@pantaubergizi.id` | Moderator |
+| `sppg-melati@pantaubergizi.id` | Pengelola SPPG Melati 01 |
+| `sppg-kenanga@pantaubergizi.id` | Pengelola SPPG Kenanga 02 |
 
-To learn more about Next.js, take a look at the following resources:
+### Skrip
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Perintah | Fungsi |
+|---|---|
+| `bun run check` | lint + typecheck + tes |
+| `bun test` | tes (butuh database `pantau_bergizi_test`, lihat `.env.test`) |
+| `bun run db:migrate` | terapkan migrasi ke `DATABASE_URL` |
+| `bun run db:seed` | isi data simulasi (hanya jika `DEMO_MODE=true`) |
+| `bun run db:reset --yes` | kosongkan lalu isi ulang data simulasi (hanya jika `DEMO_MODE=true`) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Data simulasi hari ini ditambahkan otomatis setiap hari pukul 05.00 WIB lewat Vercel Cron (`/api/cron/top-up`). Proses ini tidak pernah menghapus laporan yang sudah ada.
 
-## Deploy on Vercel
+### Demo offline (cadangan babak final)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Postgres.app berjalan, .env menunjuk ke database lokal
+bun run db:migrate && bun run db:reset --yes && bun run build && bun start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Progress saat ini
+
+- [x] Fondasi repo: Next.js 16, Tailwind, shadcn/ui, Bun
+- [x] Database PostgreSQL (7 tabel) + migrasi + data simulasi Kota Sukamaju
+- [x] Login petugas (moderator dan pengelola SPPG) dengan pemeriksaan peran di server
+- [x] Semua halaman sesuai sitemap (masih kerangka)
+- [x] Penambahan data simulasi harian
+- [ ] Beranda: papan status dapur hari ini
+- [ ] Rapor dapur: status, alasan, cakupan, tren 7 hari, sisa makanan, menu
+- [ ] Form lapor dua jalur via QR + kode lacak
+- [ ] Aturan sinyal + episode Prioritas
+- [ ] Dasbor moderator dan pengelola SPPG
+- [ ] Halaman Data nasional dan Metode
+
+Spesifikasi produk lengkap: [`PRD_Pantau_Bergizi_V2_1.md`](PRD_Pantau_Bergizi_V2_1.md).
