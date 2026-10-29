@@ -1,6 +1,7 @@
-import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { createDb, type Db } from "./index";
+
+export { truncateAll } from "./seed";
 
 let ready: Promise<Db> | undefined;
 
@@ -14,10 +15,4 @@ export function getTestDb(): Promise<Db> {
     return db;
   })();
   return ready;
-}
-
-export async function truncateAll(db: Db): Promise<void> {
-  await db.execute(
-    sql`TRUNCATE response, episode, report, menu, "user", school, sppg RESTART IDENTITY CASCADE`,
-  );
 }
