@@ -1,19 +1,19 @@
 import { sql } from "drizzle-orm";
 import { hashPassword } from "@/lib/auth";
 import { addDays, todayWIB, wibTime } from "@/lib/date";
-import type { Db } from "./index";
+import type { Db, DbOrTx } from "./index";
 import { menu, report, school, sppg, user } from "./schema";
 import { DEMO_PASSWORD, MODERATOR_EMAIL, SEED_MENUS, SEED_SPPG } from "./seed-data";
 import { type SimSchool, simulateDay } from "./simulate";
 
 const SEED_DAYS = 7;
 
-export async function truncateAll(db: Db): Promise<void> {
+export async function truncateAll(db: DbOrTx): Promise<void> {
   await db.execute(sql`TRUNCATE response, episode, report, menu, "user", school, sppg RESTART IDENTITY CASCADE`);
 }
 
 /** Seeds an empty database with Kota Sukamaju simulation data. Insert order is fixed so ids are stable. */
-export async function seed(db: Db, now: Date = new Date()): Promise<void> {
+export async function seed(db: DbOrTx, now: Date = new Date()): Promise<void> {
   const existing = await db.select({ id: sppg.id }).from(sppg).limit(1);
   if (existing.length > 0) throw new Error("Database is not empty — use `bun run db:reset --yes` instead.");
 
@@ -58,9 +58,12 @@ export async function seed(db: Db, now: Date = new Date()): Promise<void> {
   }
 }
 
-export async function resetDb(db: Db): Promise<void> {
-  await truncateAll(db);
-  await seed(db);
+/** Truncate + seed in one transaction, so a failed reset leaves the previous data in place. */
+export async function resetDb(db: Db, now: Date = new Date()): Promise<void> {
+  await db.transaction(async (tx) => {
+    await truncateAll(tx);
+    await seed(tx, now);
+  });
 }
 
 export function assertResetAllowed(demoMode: boolean, argv: string[]): void {

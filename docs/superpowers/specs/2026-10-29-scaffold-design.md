@@ -164,7 +164,7 @@ The exact demo scenario in PRD §7 is tuned in the feature plans; the scaffold s
 
 Seeded reports age out of the 24h window, so without help the live board turns "Belum ada data" a day after seeding. Praffi chose **daily top-up, manual reset**:
 
-- **Daily top-up:** a Vercel Cron job (once a day, early morning WIB — Hobby allows daily crons) calls `GET /api/cron/top-up`. It appends a fresh batch of simulated reports (`simulated = true`) for today's date. **It never deletes or edits anything**, so reports submitted by judges are kept (PRD F10). Idempotent: if today's simulated batch already exists, it does nothing.
+- **Daily top-up:** a Vercel Cron job (once a day at 12:00 WIB, `0 5 * * *` UTC, so simulated reports spread over 10:00–12:00 lunch hours; Hobby allows daily crons and may fire anywhere within the hour) calls `GET /api/cron/top-up`. It appends a fresh batch of simulated reports (`simulated = true`) for today's date. **It never deletes or edits anything**, so reports submitted by judges are kept (PRD F10). Idempotent: if today's simulated batch already exists, it does nothing.
 - **Manual reset only:** `bun run db:reset` is run by hand (e.g. before recording the video or before the onsite final). It refuses unless `DEMO_MODE=true` **and** it's passed `--yes`, and prints the target DB host before truncating.
 - Top-up and seed share one generator function, so the shape of simulated data lives in one place.
 

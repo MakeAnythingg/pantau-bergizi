@@ -47,3 +47,10 @@ test("assertResetAllowed needs DEMO_MODE and --yes", () => {
   expect(() => assertResetAllowed(true, [])).toThrow();
   expect(() => assertResetAllowed(true, ["--yes"])).not.toThrow();
 });
+
+test("a failed reset leaves the previous data intact", async () => {
+  const db = await getTestDb();
+  await seed(db);
+  await expect(resetDb(db, new Date(Number.NaN))).rejects.toThrow();
+  expect(await db.select().from(sppg)).toHaveLength(4);
+});

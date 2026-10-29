@@ -9,5 +9,6 @@ export function createDb(url: string) {
 }
 
 export type Db = ReturnType<typeof createDb>;
+export type DbOrTx = Db | Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 export const db = createDb(env.DATABASE_URL);

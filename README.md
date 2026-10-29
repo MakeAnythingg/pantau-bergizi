@@ -52,7 +52,7 @@ Kata sandi semua akun: `demo1234` (juga tertulis di halaman `/masuk`).
 | `bun run db:seed` | isi data simulasi (hanya jika `DEMO_MODE=true`) |
 | `bun run db:reset --yes` | kosongkan lalu isi ulang data simulasi (hanya jika `DEMO_MODE=true`) |
 
-Data simulasi hari ini ditambahkan otomatis setiap hari pukul 05.00 WIB lewat Vercel Cron (`/api/cron/top-up`). Proses ini tidak pernah menghapus laporan yang sudah ada.
+Data simulasi hari ini ditambahkan otomatis setiap hari sekitar pukul 12.00 WIB lewat Vercel Cron (`/api/cron/top-up`). Proses ini tidak pernah menghapus laporan yang sudah ada.
 
 ### Demo offline (cadangan babak final)
 

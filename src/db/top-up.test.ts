@@ -52,3 +52,12 @@ test("route runs top-up with the right bearer", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({ inserted: 0 });
 });
+
+test("the cron fires after lunch starts in WIB, so top-up reports land in lunch hours", async () => {
+  const { crons } = (await Bun.file("vercel.json").json()) as { crons: { path: string; schedule: string }[] };
+  const [minute, hourUtc] = crons.find((c) => c.path === "/api/cron/top-up")!.schedule.split(" ").map(Number);
+  const wibHour = (hourUtc + 7) % 24;
+  expect(minute).toBe(0);
+  expect(wibHour).toBeGreaterThanOrEqual(11); // lunch window starts 10:00 WIB; ≥1h of spread
+  expect(wibHour).toBeLessThan(16);
+});
