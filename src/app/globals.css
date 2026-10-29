@@ -135,8 +135,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: linear-gradient(180deg, #e2e7eb, #d7dde2);
-    background-attachment: fixed;
     font-variant-numeric: lining-nums tabular-nums;
   }
   h1,
