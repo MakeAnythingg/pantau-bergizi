@@ -12,7 +12,7 @@ export const SESSION_TTL_SECONDS = 8 * 60 * 60;
 const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, keylen: number) => Promise<Buffer>;
 const KEY_LEN = 64;
 
-function safeEqual(a: Buffer, b: Buffer): boolean {
+export function safeEqual(a: Buffer, b: Buffer): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
