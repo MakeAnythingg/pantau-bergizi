@@ -15,3 +15,19 @@ export function addDays(day: string, n: number): string {
 export function wibTime(day: string, hour = 0): Date {
   return new Date(`${day}T${String(hour).padStart(2, "0")}:00:00+07:00`);
 }
+
+const wibLongDay = new Intl.DateTimeFormat("id-ID", {
+  timeZone: "Asia/Jakarta",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+const wibClock = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
+const wibShortDay = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", weekday: "short" });
+
+/** "Jumat, 30 Oktober" */
+export const formatDayWIB = (d: Date) => wibLongDay.format(d);
+/** "07.00" */
+export const formatTimeWIB = (d: Date) => wibClock.format(d);
+/** "Jum" */
+export const formatWeekdayWIB = (d: Date) => wibShortDay.format(d);

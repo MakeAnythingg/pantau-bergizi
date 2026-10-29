@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Public_Sans, Zilla_Slab } from "next/font/google";
 import Link from "next/link";
+import { BrandMark } from "@/components/tray";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const publicSans = Public_Sans({
+  variable: "--font-public-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const zillaSlab = Zilla_Slab({
+  variable: "--font-zilla",
   subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -20,22 +22,27 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="id" className={`${publicSans.variable} ${zillaSlab.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <header className="border-b">
-          <nav className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
-            <Link href="/" className="font-semibold">
+        <header>
+          <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-8">
+            <Link href="/" className="flex items-center gap-2.5 font-heading text-xl font-bold tracking-tight">
+              <BrandMark />
               Pantau Bergizi
             </Link>
-            <div className="flex gap-4 text-sm">
-              <Link href="/data">Data</Link>
+            <div className="flex gap-4 text-sm font-semibold text-ink-2 sm:gap-7 sm:text-[15px]">
+              <Link href="/data" className="max-sm:hidden">
+                Data
+              </Link>
               <Link href="/metode">Metode</Link>
-              <Link href="/masuk">Masuk</Link>
+              <Link href="/masuk" className="text-navy">
+                Masuk
+              </Link>
             </div>
           </nav>
         </header>
         {children}
-        <footer className="border-t px-4 py-4 text-center text-xs text-muted-foreground">
+        <footer className="px-4 py-6 text-center text-xs text-ink-3">
           Data dapur, sekolah, dan laporan adalah SIMULASI. Pantau Bergizi adalah platform sipil independen, bukan
           sistem resmi BGN.
         </footer>
