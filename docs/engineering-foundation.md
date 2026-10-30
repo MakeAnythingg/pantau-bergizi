@@ -214,7 +214,7 @@ Focused, no smoke tests, no tests for deleted code.
 | Script | Does |
 |---|---|
 | `bun dev` / `bun run build` / `bun start` | Next.js |
-| `bun run lint` | `oxlint --type-aware` |
+| `bun run lint` | `next typegen && oxlint --type-aware` (route types must exist for type-aware rules) |
 | `bun run format` | `oxfmt` |
 | `bun run typecheck` | `next typegen && tsc --noEmit` |
 | `bun run knip` | unused files/exports/deps |
