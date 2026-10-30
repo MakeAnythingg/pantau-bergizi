@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { wibTime } from "@/lib/date";
+import { keyedHash } from "@/lib/keyed-hash";
 import type { NewReport } from "./schema";
 import { SEED_NOTES, type SignalProfile } from "./seed-data";
 
@@ -52,7 +53,7 @@ export function simulateDay({ day, until, schools }: { day: string; until: Date;
       receivedAt: at(),
       tokenHash: sha(`sim-token:${day}:${s.id}:${i}`),
       deviceHash: sha(`sim-device:${day}:${s.id}:${i}`),
-      ipHash: sha(`sim-ip:${s.code}`),
+      ipHash: keyedHash(`sim-ip:${s.code}`),
     });
 
     const experienceCount = 2 + Math.floor(rand() * 3);

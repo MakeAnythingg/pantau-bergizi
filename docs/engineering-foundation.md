@@ -112,14 +112,14 @@ Static headers from `next.config.ts` `headers()` on every route. *Accepted trade
 - **Passwords:** scrypt with a random 16-byte salt, stored as `salt:hash`, verified with `timingSafeEqual`.
 - **Session cookie** `pb_session`: base64url JSON `{ uid, role, sppgId, ver, exp }` + `.` + HMAC-SHA256 with `SESSION_SECRET`. `HttpOnly`, `Secure` in production, `SameSite=Lax`, `path=/`. Lifetime shortened from 8 hours to **4 hours** (*my call*).
 - **Revocation:** `user.session_version` (int). The session carries `ver`; `getSession()` checks it (plus role and `sppg_id`) against the DB on every staff page and action, so bumping it, or deleting/changing the account, logs that user out everywhere immediately. One indexed lookup per staff request; worth it.
-- **Throttling:** login is limited per email and per IP hash through the shared rate limiter (5 failures per 15 min per email, 20 per 15 min per IP; *my call*). The failure message stays generic.
+- **Throttling:** failed logins are limited through the shared rate limiter: 5 per 15 min per (email, IP) pair and 20 per 15 min per IP (*my call*). Keying on the pair, not the email alone, means a stranger can't lock a public demo account for the judges; a distributed attacker still meets scrypt and the per-IP limit. Throttled attempts skip the password check; a success clears that pair's failures. An unknown email still runs scrypt against a dummy hash so timing doesn't reveal which accounts exist. The failure message stays generic.
 - `requireRole(...roles)` returns the session or redirects (pages) / throws (actions). Ownership checks (`session.sppgId === target.sppgId`) live in each feature action, next to the data access. No proxy/middleware gating.
 
 *Accepted trade-off:* demo credentials are public (PRD), so anyone can act as moderator on the live site. Mitigations: the demo reset, and `audit_log` shows exactly what was done.
 
 ### Rate limiter
 
-One Postgres-backed limiter in `src/lib/rate-limit.ts`, used by login, the report form, and tracking-code lookup. Table `rate_limit(key, window_start, count)` with a fixed window; one upsert per check. Keys are namespaced (`login:email:…`, `login:ip:…`, `report:ip:…`, `lacak:ip:…`); any IP in a key is the keyed IP hash. Rows older than 24 hours are deleted by the daily cron.
+One Postgres-backed limiter in `src/lib/rate-limit.ts`, used by login, the report form, and tracking-code lookup. Table `rate_limit(key, window_start, count)` with a fixed window; one upsert per check. Keys are namespaced (`login:email-ip:…`, `login:ip:…`, later `report:ip:…`, `lacak:ip:…`). The part after the prefix is always a `keyedHash` (a branded type, so a raw IP or email can't be passed by mistake). Rows older than 24 hours are deleted by the daily cron.
 
 For the report form, the **per-device** limit (one experience survey per device per school per consumption date, from the PRD) does the real work. The **per-IP** limit only stops automated floods and must be high enough that a full class on one school wifi passes (*my call:* 120 per 10 min). Turnstile handles bots.
 

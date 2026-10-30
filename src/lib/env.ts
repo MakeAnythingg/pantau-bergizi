@@ -3,6 +3,8 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   SESSION_SECRET: z.string().min(32),
+  // Keys the hash of IPs and emails we must not store raw. Separate from SESSION_SECRET so either can rotate alone.
+  IP_HASH_SECRET: z.string().min(32),
   CRON_SECRET: z.string().min(32),
   DEMO_MODE: z
     .string()

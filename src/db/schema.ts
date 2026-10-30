@@ -8,6 +8,7 @@ import {
   index,
   integer,
   pgEnum,
+  primaryKey,
   pgTable,
   text,
   timestamp,
@@ -131,6 +132,8 @@ export const user = pgTable(
     passwordHash: text().notNull(),
     role: userRoleEnum().notNull(),
     sppgId: integer().references(() => sppg.id),
+    // Sessions carry this; bumping it logs the user out everywhere.
+    sessionVersion: integer().notNull().default(0),
   },
   (t) => [check("user_manager_has_sppg", sql`${t.role} <> 'sppg_manager' OR ${t.sppgId} IS NOT NULL`)],
 );
@@ -147,6 +150,17 @@ export const response = pgTable(
     authorUserId: integer().references(() => user.id),
   },
   (t) => [check("response_one_target", sql`num_nonnulls(${t.reportId}, ${t.episodeId}) = 1`)],
+);
+
+// Fixed-window counters for src/lib/rate-limit.ts. Keys never hold a raw IP or email (see keyedHash).
+export const rateLimit = pgTable(
+  "rate_limit",
+  {
+    key: text().notNull(),
+    windowStart: timestamp({ withTimezone: true }).notNull(),
+    count: integer().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.key, t.windowStart] })],
 );
 
 export type NewReport = typeof report.$inferInsert;

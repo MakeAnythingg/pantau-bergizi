@@ -9,7 +9,9 @@ import { type SimSchool, simulateDay } from "./simulate";
 const SEED_DAYS = 7;
 
 export async function truncateAll(db: DbOrTx): Promise<void> {
-  await db.execute(sql`TRUNCATE response, episode, report, menu, "user", school, sppg RESTART IDENTITY CASCADE`);
+  await db.execute(
+    sql`TRUNCATE response, episode, report, menu, "user", school, sppg, rate_limit RESTART IDENTITY CASCADE`,
+  );
 }
 
 /** Seeds an empty database with Kota Sukamaju simulation data. Insert order is fixed so ids are stable. */

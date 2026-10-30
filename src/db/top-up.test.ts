@@ -56,7 +56,7 @@ test("route runs top-up with the right bearer", async () => {
   const { GET } = await import("@/app/api/cron/top-up/route");
   const res = await GET(new Request("http://x", { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` } }));
   expect(res.status).toBe(200);
-  expect(await res.json()).toMatchObject({ inserted: 0 });
+  expect(await res.json()).toMatchObject({ inserted: 0, pruned: 0 });
 });
 
 const vercelConfig = z.object({ crons: z.array(z.object({ path: z.string(), schedule: z.string() })) });
