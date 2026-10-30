@@ -1,7 +1,15 @@
 import { beforeAll, expect, test } from "bun:test";
 import { user } from "@/db/schema";
 import { getTestDb, truncateAll } from "@/db/test-db";
-import { authenticate, currentSession, hashPassword, type Session, signSession, verifyPassword, verifySession } from "./auth";
+import {
+  authenticate,
+  currentSession,
+  hashPassword,
+  type Session,
+  signSession,
+  verifyPassword,
+  verifySession,
+} from "./auth";
 
 const secret = "s".repeat(32);
 const session: Session = { uid: 1, role: "moderator", sppgId: null, exp: 2_000_000_000 };
@@ -50,6 +58,15 @@ test("garbage rejected", () => {
   expect(verifySession(`${b64url("not json")}.abc`, secret)).toBeNull();
 });
 
+/** Logs in the seeded moderator; throws so a failed login fails the test loudly. */
+async function moderatorSession() {
+  const s = await authenticate(await getTestDb(), "moderator@pantaubergizi.id", "demo1234");
+
+  if (!s) throw new Error("moderator login failed");
+
+  return s;
+}
+
 beforeAll(async () => {
   const db = await getTestDb();
   await truncateAll(db);
@@ -72,14 +89,14 @@ test("authenticate rejects wrong password and unknown email", async () => {
 
 test("currentSession keeps a session whose account is unchanged", async () => {
   const db = await getTestDb();
-  const s = (await authenticate(db, "moderator@pantaubergizi.id", "demo1234"))!;
+  const s = await moderatorSession();
   const live = { ...s, exp: 2_000_000_000 };
   expect(await currentSession(db, live)).toEqual(live);
 });
 
 test("currentSession drops a session whose account was deleted or changed", async () => {
   const db = await getTestDb();
-  const s = (await authenticate(db, "moderator@pantaubergizi.id", "demo1234"))!;
+  const s = await moderatorSession();
   expect(await currentSession(db, { ...s, uid: 9999, exp: 2_000_000_000 })).toBeNull();
   expect(await currentSession(db, { ...s, role: "sppg_manager", sppgId: 1, exp: 2_000_000_000 })).toBeNull();
 });

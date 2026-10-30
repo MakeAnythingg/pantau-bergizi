@@ -13,8 +13,9 @@ const loginSchema = z.object({ email: z.string().min(1).max(254), password: z.st
 export async function loginAction(_prev: LoginState, form: FormData): Promise<LoginState> {
   const parsed = loginSchema.safeParse({ email: form.get("email"), password: form.get("password") });
   const session = parsed.success ? await authenticate(getDb(), parsed.data.email, parsed.data.password) : null;
+
   if (!session) return { error: "Email atau kata sandi salah" };
   await startSession(session);
-  redirect("/dasbor");
-}
 
+  return redirect("/dasbor");
+}

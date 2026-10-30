@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // Vendored code: owned by its upstream, not by this app's import graph.
+  "ignore": ["tools/oxlint/anti-slop/**"],
+  "ignoreIssues": {
+    // shadcn component kit: keeps its full export surface so components can be used without regenerating.
+    "src/components/ui/**": ["exports"],
+    // Every PRD threshold lives here (and on /metode) before the feature that reads it exists.
+    "src/lib/thresholds.ts": ["exports"],
+  },
+}

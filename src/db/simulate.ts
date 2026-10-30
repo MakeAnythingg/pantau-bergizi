@@ -8,10 +8,12 @@ export type SimSchool = { id: number; sppgId: number; code: string; profile: Sig
 // mulberry32 — tiny deterministic PRNG so the same day always yields the same reports.
 function prng(seedText: string) {
   let a = createHash("sha256").update(seedText).digest().readUInt32LE(0);
+
   return () => {
     a = (a + 0x6d2b79f5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
@@ -28,6 +30,7 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
  */
 export function simulateDay({ day, until, schools }: { day: string; until: Date; schools: SimSchool[] }): NewReport[] {
   const dayStart = wibTime(day);
+
   if (until <= dayStart) return [];
   const lunchStart = wibTime(day, 10);
   const to = new Date(Math.min(until.getTime(), wibTime(day, 16).getTime()));
@@ -39,8 +42,9 @@ export function simulateDay({ day, until, schools }: { day: string; until: Date;
   for (const s of schools) {
     if (s.profile === "no_data") continue;
     const rand = prng(`${day}:${s.id}`);
-    const pick = <T>(xs: readonly T[]) => xs[Math.floor(rand() * xs.length)];
+    const pick = <T>(xs: readonly [T, ...T[]]) => xs[Math.floor(rand() * xs.length)] ?? xs[0];
     const at = () => new Date(from.getTime() + rand() * (to.getTime() - from.getTime()));
+
     const base = (i: number) => ({
       schoolId: s.id,
       simulated: true,
@@ -52,6 +56,7 @@ export function simulateDay({ day, until, schools }: { day: string; until: Date;
     });
 
     const experienceCount = 2 + Math.floor(rand() * 3);
+
     for (let i = 0; i < experienceCount; i++) {
       rows.push({
         ...base(i),
@@ -69,7 +74,10 @@ export function simulateDay({ day, until, schools }: { day: string; until: Date;
     // attention: the first school reports a single case.
     const seen = healthCountBySppg.get(s.sppgId) ?? 0;
     healthCountBySppg.set(s.sppgId, seen + 1);
-    const healthCount = s.profile === "priority" ? [2, 1][seen] ?? 0 : s.profile === "attention" && seen === 0 ? 1 : 0;
+
+    const healthCount =
+      s.profile === "priority" ? ([2, 1][seen] ?? 0) : s.profile === "attention" && seen === 0 ? 1 : 0;
+
     for (let i = 0; i < healthCount; i++) {
       rows.push({
         ...base(100 + i),
@@ -81,5 +89,6 @@ export function simulateDay({ day, until, schools }: { day: string; until: Date;
       });
     }
   }
+
   return rows;
 }

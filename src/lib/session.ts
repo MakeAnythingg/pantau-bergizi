@@ -5,19 +5,22 @@ import { getDb } from "@/db";
 import { currentSession, type Role, type Session, SESSION_TTL_SECONDS, signSession, verifySession } from "./auth";
 import { getEnv } from "./env";
 
-export const SESSION_COOKIE = "pb_session";
+const SESSION_COOKIE = "pb_session";
 
-export async function getSession(): Promise<Session | null> {
+async function getSession(): Promise<Session | null> {
   await connection(); // session expiry reads the clock, so this must render at request time
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = token ? verifySession(token, getEnv().SESSION_SECRET) : null;
+
   return session && currentSession(getDb(), session);
 }
 
 /** Every staff page and server action calls this first. Redirects to /masuk when not allowed. */
 export async function requireRole(...roles: Role[]): Promise<Session> {
   const session = await getSession();
+
   if (!session || !roles.includes(session.role)) redirect("/masuk");
+
   return session;
 }
 

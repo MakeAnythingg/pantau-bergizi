@@ -4,5 +4,6 @@ import { endSession } from "@/lib/session";
 // pages alive in hidden <Activity> DOM, and a full load is the only way to drop the dashboard's.
 export async function POST(request: Request) {
   await endSession();
+
   return Response.redirect(new URL("/masuk", request.url), 303);
 }

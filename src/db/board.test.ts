@@ -26,8 +26,8 @@ test("board lists kitchens by urgency with their seeded status and coverage", as
 
 test("rapor has today's menu, schools, a 7-day trend and recent reports", async () => {
   const db = await getTestDb();
-  const melati = (await getBoard(db, now))[0];
-  const rapor = await getRapor(db, melati.id, now);
+  const melati = (await getBoard(db, now)).at(0);
+  const rapor = await getRapor(db, melati?.id ?? 0, now);
   expect(rapor?.signal.status).toBe("priority");
   expect(rapor?.menu?.name).toBeString();
   expect(rapor?.schools).toHaveLength(4);
@@ -41,9 +41,9 @@ test("rapor has today's menu, schools, a 7-day trend and recent reports", async 
     "2026-10-30",
   ]);
   expect(rapor?.trend.at(-1)?.health).toBe(true);
-  expect(rapor?.trend[0].health).toBe(false);
+  expect(rapor?.trend[0]?.health).toBe(false);
   expect(rapor?.experience.health).toBe(3);
-  expect(rapor?.latest[0].kind).toBe("health");
+  expect(rapor?.latest[0]?.kind).toBe("health");
 });
 
 test("a kitchen without today's menu or reports still has a rapor", async () => {
@@ -67,10 +67,18 @@ test("school search matches names and treats % literally", async () => {
 test("reports about meals eaten long ago don't drive today's status", async () => {
   const db = await getTestDb();
   const dahlia = (await getBoard(db, now)).at(-1);
-  const schools = await db.select().from(school).where(eq(school.sppgId, dahlia?.id ?? 0));
+
+  const schools = await db
+    .select()
+    .from(school)
+    .where(eq(school.sppgId, dahlia?.id ?? 0));
+
+  const [first, second] = schools;
+
+  if (!first || !second) throw new Error("Dahlia needs two schools");
   await db.insert(report).values(
-    [0, 0, 1].map((i, n) => ({
-      schoolId: schools[i].id,
+    [first, first, second].map((s, n) => ({
+      schoolId: s.id,
       reporterRole: "parent" as const,
       kind: "health" as const,
       consumedOn: "2026-10-15",

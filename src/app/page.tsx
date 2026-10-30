@@ -1,12 +1,13 @@
 import { MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
-import { connection } from "next/server";
 import { Suspense } from "react";
+import { z } from "zod";
 import { Cups, STATUS_FILL, STATUS_SWATCH } from "@/components/tray";
 import { type BoardKitchen, getBoard, searchSchools } from "@/db/board";
 import { getDb } from "@/db/index";
 import { formatDayWIB } from "@/lib/date";
-import { STATUS_LABEL, type Status } from "@/lib/status";
+import { requestNow } from "@/lib/now";
+import { STATUS_LABEL, STATUSES, type Status } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 const STATUS_NOTE: Record<Status, string | null> = {
@@ -15,6 +16,9 @@ const STATUS_NOTE: Record<Status, string | null> = {
   no_signal: null,
   no_data: "Bukan berarti baik",
 };
+
+// `?q=` is free text from the URL; anything that isn't a single string means no search.
+const searchQuery = z.string().trim().max(60).catch("");
 
 export default function BerandaPage({ searchParams }: PageProps<"/">) {
   return (
@@ -30,10 +34,8 @@ export default function BerandaPage({ searchParams }: PageProps<"/">) {
 }
 
 async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
-  await connection();
-  const now = new Date();
-  const q = (await searchParams).q;
-  const query = typeof q === "string" ? q.trim() : "";
+  const now = await requestNow();
+  const query = searchQuery.parse((await searchParams).q);
   const db = getDb();
   const [board, matches] = await Promise.all([getBoard(db, now), query ? searchSchools(db, query) : null]);
   const tally = (s: Status) => board.filter((k) => k.signal.status === s).length;
@@ -46,22 +48,24 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       </p>
 
       <div className="mt-6 mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <form action="/" role="search" className="w-full lg:max-w-[440px]">
-          <label className="flex items-center gap-3 rounded-full bg-white px-5 py-3.5 text-ink-3 shadow-[0_0_0_1px_rgb(24_36_44/0.06),0_2px_6px_-2px_rgb(24_36_44/0.14)] focus-within:ring-2 focus-within:ring-navy">
-            <MagnifyingGlassIcon size={18} aria-hidden="true" />
-            <span className="sr-only">Cari sekolah</span>
-            <input
-              name="q"
-              type="search"
-              defaultValue={query}
-              maxLength={60}
-              placeholder="Cari sekolah anak Anda"
-              className="w-full bg-transparent text-ink outline-none placeholder:text-ink-3"
-            />
-          </label>
-        </form>
+        <search className="w-full lg:max-w-[440px]">
+          <form action="/">
+            <label className="flex items-center gap-3 rounded-full bg-white px-5 py-3.5 text-ink-3 shadow-[0_0_0_1px_rgb(24_36_44/0.06),0_2px_6px_-2px_rgb(24_36_44/0.14)] focus-within:ring-2 focus-within:ring-navy">
+              <MagnifyingGlassIcon size={18} aria-hidden="true" />
+              <span className="sr-only">Cari sekolah</span>
+              <input
+                name="q"
+                type="search"
+                defaultValue={query}
+                maxLength={60}
+                placeholder="Cari sekolah anak Anda"
+                className="w-full bg-transparent text-ink outline-none placeholder:text-ink-3"
+              />
+            </label>
+          </form>
+        </search>
         <ul className="flex flex-wrap gap-2 lg:flex-nowrap" aria-label="Jumlah dapur per status">
-          {(Object.keys(STATUS_LABEL) as Status[]).map((s) => (
+          {STATUSES.map((s) => (
             <li
               key={s}
               className="inline-flex items-center gap-2 rounded-full bg-rim py-1.5 pr-3.5 pl-2.5 text-[13px] font-semibold text-ink-2 shadow-[inset_0_1px_0_#fff,0_1px_2px_rgb(24_36_44/0.08)]"
@@ -81,7 +85,10 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
             <ul className="divide-y divide-well">
               {matches.map((s) => (
                 <li key={s.code}>
-                  <Link href={`/sppg/${s.sppgId}`} className="flex flex-col py-2.5 hover:text-navy sm:flex-row sm:justify-between sm:gap-4">
+                  <Link
+                    href={`/sppg/${s.sppgId}`}
+                    className="flex flex-col py-2.5 hover:text-navy sm:flex-row sm:justify-between sm:gap-4"
+                  >
                     <b className="font-semibold">{s.name}</b>
                     <span className="text-ink-2">dilayani {s.sppgName}</span>
                   </Link>
@@ -103,6 +110,7 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
 
 function KitchenRow({ kitchen: k }: { kitchen: BoardKitchen }) {
   const note = k.signal.label ?? STATUS_NOTE[k.signal.status];
+
   return (
     <li>
       <Link

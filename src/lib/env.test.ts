@@ -27,10 +27,12 @@ test("rejects CRON_SECRET shorter than 32 chars", () => {
 
 test("importing the db and env modules does not require env vars (Vercel build without secrets)", async () => {
   const dir = import.meta.dir;
+
   const proc = Bun.spawn(["bun", "-e", `await import("${dir}/../db/index.ts"); await import("${dir}/env.ts")`], {
     cwd: "/tmp", // no .env here, so Bun loads nothing
     env: { PATH: process.env.PATH ?? "" },
     stderr: "pipe",
   });
+
   expect(await proc.exited).toBe(0);
 });

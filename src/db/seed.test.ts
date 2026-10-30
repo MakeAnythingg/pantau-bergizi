@@ -10,6 +10,7 @@ beforeEach(async () => truncateAll(await getTestDb()));
 async function userIds() {
   const db = await getTestDb();
   const rows = await db.select({ id: user.id, email: user.email }).from(user).orderBy(user.email);
+
   return rows;
 }
 
@@ -32,11 +33,13 @@ test("Dahlia has no menu for today, others do", async () => {
   const db = await getTestDb();
   await seed(db);
   const today = todayWIB();
+
   const rows = await db
     .select({ name: sppg.name })
     .from(menu)
     .innerJoin(sppg, eq(menu.sppgId, sppg.id))
     .where(and(eq(menu.servedOn, today)));
+
   const names = rows.map((r) => r.name);
   expect(names).toHaveLength(3);
   expect(names.some((n) => n.startsWith("SPPG Dahlia"))).toBe(false);

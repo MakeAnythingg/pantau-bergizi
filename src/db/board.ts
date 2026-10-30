@@ -16,6 +16,7 @@ const windowStart = (now: Date) => new Date(now.getTime() - SIGNAL_WINDOW_HOURS 
 const feedsSignal = (now: Date) => {
   const since = windowStart(now);
   const oldestMeal = addDays(todayWIB(now), -1);
+
   return (r: Pick<Row, "receivedAt" | "consumedOn">) => r.receivedAt >= since && r.consumedOn >= oldestMeal;
 };
 
@@ -51,7 +52,13 @@ function reportsSince(db: Db, since: Date, sppgId?: number) {
 
 type Row = Awaited<ReturnType<typeof reportsSince>>[number];
 
-const reportedSchools = (rows: Row[]) => new Set(rows.filter(counts).map((r) => r.schoolId));
+const reportedSchools = (rows: Row[]) =>
+  new Set(
+    rows
+      .values()
+      .filter(counts)
+      .map((r) => r.schoolId),
+  );
 
 /** Every kitchen with today's status, most urgent first (Beranda). */
 export async function getBoard(db: Db, now: Date) {
@@ -60,10 +67,13 @@ export async function getBoard(db: Db, now: Date) {
     db.select({ id: school.id, sppgId: school.sppgId }).from(school),
     reportsSince(db, windowStart(now)),
   ]);
+
   const inSignal = feedsSignal(now);
+
   return kitchens
     .map((k) => {
       const own = rows.filter((r) => r.sppgId === k.id && inSignal(r));
+
       return {
         ...k,
         signal: computeSignal(own),
@@ -71,14 +81,18 @@ export async function getBoard(db: Db, now: Date) {
         total: schools.filter((s) => s.sppgId === k.id).length,
       };
     })
-    .sort((a, b) => RANK[a.signal.status] - RANK[b.signal.status] || a.name.localeCompare(b.name));
+    .toSorted((a, b) => RANK[a.signal.status] - RANK[b.signal.status] || a.name.localeCompare(b.name));
 }
 
 export type BoardKitchen = Awaited<ReturnType<typeof getBoard>>[number];
 
 /** Schools whose name contains `q`, for "Cari sekolah anak Anda". */
 export function searchSchools(db: Db, q: string) {
-  const term = q.trim().slice(0, 60).replace(/[\\%_]/g, "\\$&");
+  const term = q
+    .trim()
+    .slice(0, 60)
+    .replace(/[\\%_]/g, "\\$&");
+
   return db
     .select({ code: school.code, name: school.name, sppgId: school.sppgId, sppgName: sppg.name })
     .from(school)
@@ -91,13 +105,18 @@ export function searchSchools(db: Db, q: string) {
 /** One kitchen's daily rapor, or null for an unknown id. */
 export async function getRapor(db: Db, sppgId: number, now: Date) {
   const [kitchen] = await db.select().from(sppg).where(eq(sppg.id, sppgId));
+
   if (!kitchen) return null;
 
   const today = todayWIB(now);
   const firstDay = addDays(today, -(Math.max(TREND_DAYS, LEFTOVER_WINDOW_DAYS) - 1));
+
   const [schools, [todayMenu], rows] = await Promise.all([
     db.select().from(school).where(eq(school.sppgId, sppgId)).orderBy(asc(school.id)),
-    db.select().from(menu).where(and(eq(menu.sppgId, sppgId), eq(menu.servedOn, today))),
+    db
+      .select()
+      .from(menu)
+      .where(and(eq(menu.sppgId, sppgId), eq(menu.servedOn, today))),
     reportsSince(db, new Date(`${firstDay}T00:00:00+07:00`), sppgId),
   ]);
 
@@ -106,7 +125,11 @@ export async function getRapor(db: Db, sppgId: number, now: Date) {
   const reported = reportedSchools(inWindow);
 
   const ratedToday = counted.filter((r) => r.consumedOn === today && r.rating !== null);
-  const leftover = counted.filter((r) => r.leftover !== null && r.consumedOn >= addDays(today, 1 - LEFTOVER_WINDOW_DAYS));
+
+  const leftover = counted.filter(
+    (r) => r.leftover !== null && r.consumedOn >= addDays(today, 1 - LEFTOVER_WINDOW_DAYS),
+  );
+
   const experience = {
     rating: ratedToday.length ? ratedToday.reduce((a, r) => a + (r.rating ?? 0), 0) / ratedToday.length : null,
     rated: ratedToday.length,
@@ -120,10 +143,14 @@ export async function getRapor(db: Db, sppgId: number, now: Date) {
   const trend = Array.from({ length: TREND_DAYS }, (_, i) => {
     const day = addDays(today, i - TREND_DAYS + 1);
     const dayRows = counted.filter((r) => todayWIB(r.receivedAt) === day);
+
     return { day, reports: dayRows.length, health: dayRows.some((r) => r.kind === "health") };
   });
 
-  const latestRows = [...counted].sort((a, b) => Number(b.kind === "health") - Number(a.kind === "health")).slice(0, LATEST_LIMIT);
+  const latestRows = counted
+    .toSorted((a, b) => Number(b.kind === "health") - Number(a.kind === "health"))
+    .slice(0, LATEST_LIMIT);
+
   const replies = latestRows.length
     ? await db
         .select({ reportId: response.reportId, body: response.body, createdAt: response.createdAt })
@@ -139,6 +166,7 @@ export async function getRapor(db: Db, sppgId: number, now: Date) {
         )
         .orderBy(desc(response.createdAt))
     : [];
+
   const latest = latestRows.map((r) => ({ ...r, reply: replies.find((x) => x.reportId === r.id) ?? null }));
 
   return {

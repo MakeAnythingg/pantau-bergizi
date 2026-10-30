@@ -10,12 +10,23 @@ export function createDb(url: string) {
 }
 
 export type Db = ReturnType<typeof createDb>;
+
 export type DbOrTx = Db | Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+/** The row from an INSERT … RETURNING of a single value. Postgres always returns it; throws if not. */
+export function one<T>(rows: T[]): T {
+  const [row] = rows;
+
+  if (row === undefined) throw new Error("Expected exactly one returned row");
+
+  return row;
+}
 
 let cached: Db | undefined;
 
 /** The app's client, created on first use (see getEnv). */
 export function getDb(): Db {
   cached ??= createDb(getEnv().DATABASE_URL);
+
   return cached;
 }

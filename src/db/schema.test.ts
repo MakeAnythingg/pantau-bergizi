@@ -1,4 +1,5 @@
 import { beforeEach, expect, test } from "bun:test";
+import { one } from "./index";
 import { episode, menu, report, response, school, sppg, user } from "./schema";
 import { getTestDb, truncateAll } from "./test-db";
 
@@ -6,8 +7,8 @@ beforeEach(async () => truncateAll(await getTestDb()));
 
 async function insertSppg() {
   const db = await getTestDb();
-  const [row] = await db.insert(sppg).values({ name: "SPPG Uji", district: "Kec. Uji" }).returning();
-  return row;
+
+  return one(await db.insert(sppg).values({ name: "SPPG Uji", district: "Kec. Uji" }).returning());
 }
 
 test("sppg_manager without sppg_id is rejected", async () => {
@@ -19,10 +20,9 @@ test("sppg_manager without sppg_id is rejected", async () => {
 
 test("moderator without sppg_id is accepted", async () => {
   const db = await getTestDb();
-  const rows = await db
-    .insert(user)
-    .values({ email: "mod@x.id", passwordHash: "h", role: "moderator" })
-    .returning();
+
+  const rows = await db.insert(user).values({ email: "mod@x.id", passwordHash: "h", role: "moderator" }).returning();
+
   expect(rows).toHaveLength(1);
 });
 
@@ -34,21 +34,25 @@ test("response with neither report_id nor episode_id is rejected", async () => {
 test("response with both report_id and episode_id is rejected", async () => {
   const db = await getTestDb();
   const s = await insertSppg();
-  const [sc] = await db.insert(school).values({ name: "SD", code: "SD1", lat: 0, lng: 0, sppgId: s.id }).returning();
-  const [r] = await db
-    .insert(report)
-    .values({
-      schoolId: sc.id,
-      reporterRole: "student",
-      kind: "experience",
-      consumedOn: "2026-10-29",
-      locationCheck: "unavailable",
-      tokenHash: "t",
-      deviceHash: "d",
-      ipHash: "i",
-    })
-    .returning();
-  const [e] = await db.insert(episode).values({ sppgId: s.id, rule: "auto_multi_school" }).returning();
+  const sc = one(await db.insert(school).values({ name: "SD", code: "SD1", lat: 0, lng: 0, sppgId: s.id }).returning());
+
+  const r = one(
+    await db
+      .insert(report)
+      .values({
+        schoolId: sc.id,
+        reporterRole: "student",
+        kind: "experience",
+        consumedOn: "2026-10-29",
+        locationCheck: "unavailable",
+        tokenHash: "t",
+        deviceHash: "d",
+        ipHash: "i",
+      })
+      .returning(),
+  );
+
+  const e = one(await db.insert(episode).values({ sppgId: s.id, rule: "auto_multi_school" }).returning());
   await expect(
     db.insert(response).values({ reportId: r.id, episodeId: e.id, body: "x", authorKind: "moderator" }).execute(),
   ).rejects.toThrow();

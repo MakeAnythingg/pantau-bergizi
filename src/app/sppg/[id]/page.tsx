@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
 import { STATUS_FILL } from "@/components/tray";
 import { getRapor, type Rapor } from "@/db/board";
 import { getDb } from "@/db/index";
 import { addDays, formatDayWIB, formatTimeWIB, formatWeekdayWIB, todayWIB } from "@/lib/date";
+import { requestNow } from "@/lib/now";
 import { STATUS_LABEL, type Status } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -21,17 +21,20 @@ const STATUS_HINT: Record<Status, string> = {
 type Latest = Rapor["latest"][number];
 
 const ROLE: Record<Latest["reporterRole"], string> = { teacher: "Guru/UKS", student: "Siswa", parent: "Orang tua" };
+
 const PLACE: Record<Latest["locationCheck"], string> = {
   inside: "di area sekolah",
   outside: "di luar area sekolah",
   unavailable: "lokasi tidak tersedia",
 };
+
 const SYMPTOM: Record<Latest["symptoms"][number], string> = {
   nausea: "Mual",
   diarrhea: "Diare",
   dizzy: "Pusing",
   other: "Keluhan lain",
 };
+
 const PROBLEM: Record<Latest["problems"][number], string | null> = {
   stale: "basi",
   foreign_object: "ada benda asing",
@@ -39,21 +42,26 @@ const PROBLEM: Record<Latest["problems"][number], string | null> = {
   late: "terlambat",
   none: null,
 };
+
 const LEFTOVER: Record<NonNullable<Latest["leftover"]>, string> = {
   none: "habis",
   little: "sisa sedikit",
   lots: "sisa banyak",
 };
+
 const REVIEWED: ReadonlySet<Latest["status"]> = new Set(["reviewed", "responded", "closed"]);
 
 const decimal = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 1 });
+
 /** "hari ini 11.05", "kemarin 11.05", or "Sel 11.05". */
 function whenWIB(d: Date, now: Date) {
   const today = todayWIB(now);
   const day = todayWIB(d);
   const label = day === today ? "hari ini" : day === addDays(today, -1) ? "kemarin" : formatWeekdayWIB(d);
+
   return `${label} ${formatTimeWIB(d)}`;
 }
+
 const hoursSince = (from: Date, now: Date) => Math.max(0, Math.floor((now.getTime() - from.getTime()) / 3_600_000));
 
 export default function RaporDapurPage({ params }: PageProps<"/sppg/[id]">) {
@@ -68,10 +76,11 @@ export default function RaporDapurPage({ params }: PageProps<"/sppg/[id]">) {
 
 async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
   const { id } = await params;
+
   if (!/^\d{1,9}$/.test(id)) notFound();
-  await connection();
-  const now = new Date();
+  const now = await requestNow();
   const rapor = await getRapor(getDb(), Number(id), now);
+
   if (!rapor) notFound();
   const { kitchen, signal, schools, menu, experience, trend, latest } = rapor;
   const reported = schools.filter((s) => s.reported).length;
@@ -84,7 +93,9 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
         </Link>{" "}
         / Rapor harian, {formatDayWIB(now)}
       </p>
-      <h1 className="font-heading text-[32px] leading-[1.05] font-bold tracking-tight sm:text-[52px]">{kitchen.name}</h1>
+      <h1 className="font-heading text-[32px] leading-[1.05] font-bold tracking-tight sm:text-[52px]">
+        {kitchen.name}
+      </h1>
       <p className="mt-1.5 mb-6 text-ink-2">
         {kitchen.district}, melayani {schools.length} sekolah
       </p>
@@ -124,7 +135,10 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
               <p className="font-heading text-[26px] leading-tight font-bold tracking-tight">{menu.name}</p>
               <ul className="my-3 flex flex-wrap gap-1.5">
                 {menu.composition.split(",").map((item) => (
-                  <li key={item} className="rounded-full first-letter:uppercase bg-white px-3 py-1 text-[13px] font-medium shadow-sm">
+                  <li
+                    key={item}
+                    className="rounded-full first-letter:uppercase bg-white px-3 py-1 text-[13px] font-medium shadow-sm"
+                  >
                     {item.trim()}
                   </li>
                 ))}
@@ -149,13 +163,17 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
             <Num
               value={experience.rating === null ? "–" : decimal(experience.rating)}
               label={
-                experience.rating === null ? "belum ada nilai hari ini" : `nilai rata-rata dari ${experience.rated} laporan`
+                experience.rating === null
+                  ? "belum ada nilai hari ini"
+                  : `nilai rata-rata dari ${experience.rated} laporan`
               }
             />
             <Num
               value={experience.leftoverLots === null ? "–" : `${Math.round(experience.leftoverLots * 100)}%`}
               label={
-                experience.leftoverLots === null ? "sisa makanan: data belum cukup" : "laporan “sisa banyak” dalam 7 hari"
+                experience.leftoverLots === null
+                  ? "sisa makanan: data belum cukup"
+                  : "laporan “sisa banyak” dalam 7 hari"
               }
             />
             <Num
@@ -214,7 +232,9 @@ function Cell({ title, className, children }: { title: string; className?: strin
 function Num({ value, label, alarm }: { value: string; label: string; alarm?: boolean }) {
   return (
     <div>
-      <b className={cn("block text-[34px] leading-none font-bold tracking-tight sm:text-[40px]", alarm && "text-alarm")}>
+      <b
+        className={cn("block text-[34px] leading-none font-bold tracking-tight sm:text-[40px]", alarm && "text-alarm")}
+      >
         {value}
       </b>
       <span className="mt-1.5 block text-[13px] leading-snug text-ink-2">{label}</span>
@@ -224,11 +244,13 @@ function Num({ value, label, alarm }: { value: string; label: string; alarm?: bo
 
 function Trend({ trend }: { trend: Rapor["trend"] }) {
   const max = Math.max(1, ...trend.map((d) => d.reports));
+
   return (
     <ol className="grid grid-cols-7 gap-2">
       {trend.map((d, i) => {
         const weekday = formatWeekdayWIB(new Date(`${d.day}T12:00:00+07:00`));
         const today = i === trend.length - 1;
+
         return (
           <li key={d.day} className="flex flex-col items-stretch gap-1.5">
             <span className="flex h-[74px] items-end" aria-hidden="true">
@@ -253,6 +275,7 @@ function Trend({ trend }: { trend: Rapor["trend"] }) {
 
 function ReportRow({ report: r, now }: { report: Latest; now: Date }) {
   const health = r.kind === "health";
+
   const summary = health
     ? [
         r.symptoms.map((s) => SYMPTOM[s]).join(", "),
@@ -295,16 +318,15 @@ function ReportState({ report: r, now }: { report: Latest; now: Date }) {
   if (r.reply) {
     return (
       <div className="rounded-xl bg-calm-soft px-3.5 py-2.5 text-sm">
-        <b className="block text-xs text-calm">
-          Tanggapan pengelola, {whenWIB(r.reply.createdAt, now)}
-        </b>
+        <b className="block text-xs text-calm">Tanggapan pengelola, {whenWIB(r.reply.createdAt, now)}</b>
         {r.reply.body}
       </div>
     );
   }
+
   if (r.status === "received") return <p className="text-sm text-ink-3">Menunggu tinjauan moderator</p>;
+
   if (r.status === "closed") return <p className="text-sm text-ink-3">Selesai</p>;
-  return (
-    <p className="text-sm font-bold text-alarm">Belum ditanggapi · {hoursSince(r.receivedAt, now)} jam</p>
-  );
+
+  return <p className="text-sm font-bold text-alarm">Belum ditanggapi · {hoursSince(r.receivedAt, now)} jam</p>;
 }

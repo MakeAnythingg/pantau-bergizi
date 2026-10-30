@@ -9,10 +9,13 @@ let ready: Promise<Db> | undefined;
 export function getTestDb(): Promise<Db> {
   ready ??= (async () => {
     const url = process.env.TEST_DATABASE_URL;
+
     if (!url) throw new Error("TEST_DATABASE_URL is not set (see .env.test)");
     const db = createDb(url);
     await migrate(db, { migrationsFolder: "drizzle" });
+
     return db;
   })();
+
   return ready;
 }

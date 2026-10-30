@@ -13,6 +13,7 @@ const schools: SimSchool[] = [
   { id: 7, sppgId: 3, code: "c2", profile: "no_signal" },
   { id: 8, sppgId: 4, code: "d1", profile: "no_data" },
 ];
+
 const day = "2026-10-29";
 const endOfDay = new Date("2026-10-29T23:59:00+07:00");
 const rows = simulateDay({ day, until: endOfDay, schools });
@@ -62,13 +63,15 @@ test("never generates received_at after `until`", () => {
   const until = new Date("2026-10-29T22:00:00Z"); // 05:00 WIB on 2026-10-30
   const early = simulateDay({ day: "2026-10-30", until, schools });
   expect(early.length).toBeGreaterThan(0);
-  for (const r of early) expect(r.receivedAt!.getTime()).toBeLessThanOrEqual(until.getTime());
+
+  for (const r of early) expect(r.receivedAt?.getTime() ?? Infinity).toBeLessThanOrEqual(until.getTime());
 });
 
 test("a midday top-up clusters reports in the 30 minutes before `until`", () => {
   const until = new Date("2026-10-30T12:40:00+07:00");
-  const rows = simulateDay({ day: "2026-10-30", until, schools });
-  for (const r of rows) {
-    expect(until.getTime() - r.receivedAt!.getTime()).toBeLessThanOrEqual(30 * 60 * 1000);
+  const midday = simulateDay({ day: "2026-10-30", until, schools });
+
+  for (const r of midday) {
+    expect(until.getTime() - (r.receivedAt?.getTime() ?? -Infinity)).toBeLessThanOrEqual(30 * 60 * 1000);
   }
 });

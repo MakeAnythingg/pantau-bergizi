@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 120,
+  "ignorePatterns": [
+    "**/*.md",
+    "drizzle/**",
+    "tools/oxlint/anti-slop/**",
+    ".agent/**",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    ".continue/**",
+    ".cursor/**",
+    ".gemini/**",
+    ".opencode/**",
+    ".pi/**",
+    ".playwright-mcp/**",
+    ".roo/**",
+    ".superpowers/**",
+    ".windsurf/**"
+  ]
+}

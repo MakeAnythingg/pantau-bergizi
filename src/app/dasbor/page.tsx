@@ -7,9 +7,11 @@ import { requireRole } from "@/lib/session";
 
 async function Dashboard() {
   const session = await requireRole("moderator", "sppg_manager");
+
   const kitchen = session.sppgId
     ? await getDb().query.sppg.findFirst({ where: eq(sppg.id, session.sppgId) })
     : undefined;
+
   return (
     <div className="flex items-center justify-between gap-4">
       <h1 className="text-xl font-semibold">

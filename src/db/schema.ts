@@ -116,7 +116,11 @@ export const episode = pgTable(
     forwardingNote: text(),
     closedAt: timestamp({ withTimezone: true }),
   },
-  (t) => [index().on(t.sppgId).where(sql`${t.closedAt} IS NULL`)],
+  (t) => [
+    index()
+      .on(t.sppgId)
+      .where(sql`${t.closedAt} IS NULL`),
+  ],
 );
 
 export const user = pgTable(

@@ -16,6 +16,7 @@ const exp = (o: Partial<SignalReport> = {}): SignalReport => ({
   duplicateOf: null,
   ...o,
 });
+
 const health = (o: Partial<SignalReport> = {}) =>
   exp({ kind: "health", rating: null, problems: [], symptoms: ["nausea"], subject: "self", ...o });
 
@@ -35,6 +36,7 @@ test("3 health from 2 schools, 1 inside → priority (a)", () => {
     health({ locationCheck: "unavailable" }),
     health({ schoolId: 2, schoolName: "SDN B", locationCheck: "outside" }),
   ]);
+
   expect(s.status).toBe("priority");
   expect(s.label).toBe("Otomatis, belum ditinjau moderator");
   expect(s.reason).toBe("3 keluhan mual dari 2 sekolah dalam 24 jam, 1 dikirim dari area sekolah.");
@@ -57,6 +59,7 @@ test("rejected and duplicate reports don't count", () => {
     health({ status: "rejected" }),
     health({ duplicateOf: 7 }),
   ]);
+
   expect(s.status).toBe("attention");
 });
 
@@ -85,9 +88,9 @@ test("one health report → attention naming the school", () => {
 
 test("stale food counts inside the school area or once reviewed, not otherwise", () => {
   expect(computeSignal([exp({ problems: ["stale"] })]).status).toBe("attention");
-  expect(computeSignal([exp({ problems: ["foreign_object"], locationCheck: "outside", status: "reviewed" })]).status).toBe(
-    "attention",
-  );
+  expect(
+    computeSignal([exp({ problems: ["foreign_object"], locationCheck: "outside", status: "reviewed" })]).status,
+  ).toBe("attention");
   expect(computeSignal([exp({ problems: ["stale"], locationCheck: "outside" })]).status).toBe("no_signal");
 });
 

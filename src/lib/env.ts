@@ -21,5 +21,6 @@ let cached: Env | undefined;
 /** Parsed on first use, not at import, so `next build` works without runtime secrets. */
 export function getEnv(): Env {
   cached ??= parseEnv(process.env);
+
   return cached;
 }

@@ -8,6 +8,7 @@ import { type LoginState, loginAction } from "./actions";
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(loginAction, {});
+
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">

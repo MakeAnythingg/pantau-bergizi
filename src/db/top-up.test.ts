@@ -1,5 +1,7 @@
 import { beforeEach, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { one } from "./index";
 import { report, school } from "./schema";
 import { resetDb } from "./seed";
 import { getTestDb } from "./test-db";
@@ -22,20 +24,24 @@ test("top-up inserts once per WIB day", async () => {
 
 test("top-up never deletes judge reports", async () => {
   const db = await getTestDb();
-  const [sc] = await db.select().from(school).limit(1);
-  const [judge] = await db
-    .insert(report)
-    .values({
-      schoolId: sc.id,
-      reporterRole: "teacher",
-      kind: "experience",
-      consumedOn: "2026-10-29",
-      locationCheck: "inside",
-      tokenHash: "judge-token",
-      deviceHash: "judge-device",
-      ipHash: "judge-ip",
-    })
-    .returning();
+  const sc = one(await db.select().from(school).limit(1));
+
+  const judge = one(
+    await db
+      .insert(report)
+      .values({
+        schoolId: sc.id,
+        reporterRole: "teacher",
+        kind: "experience",
+        consumedOn: "2026-10-29",
+        locationCheck: "inside",
+        tokenHash: "judge-token",
+        deviceHash: "judge-device",
+        ipHash: "judge-ip",
+      })
+      .returning(),
+  );
+
   await topUp(db, tomorrow());
   expect(await db.select().from(report).where(eq(report.id, judge.id))).toHaveLength(1);
 });
@@ -53,10 +59,14 @@ test("route runs top-up with the right bearer", async () => {
   expect(await res.json()).toMatchObject({ inserted: 0 });
 });
 
+const vercelConfig = z.object({ crons: z.array(z.object({ path: z.string(), schedule: z.string() })) });
+
 test("the cron fires after lunch starts in WIB, so top-up reports land in lunch hours", async () => {
-  const { crons } = (await Bun.file("vercel.json").json()) as { crons: { path: string; schedule: string }[] };
-  const [minute, hourUtc] = crons.find((c) => c.path === "/api/cron/top-up")!.schedule.split(" ").map(Number);
-  const wibHour = (hourUtc + 7) % 24;
+  const { crons } = vercelConfig.parse(await Bun.file("vercel.json").json());
+  const schedule = crons.find((c) => c.path === "/api/cron/top-up")?.schedule ?? "";
+  const [minute, hourUtc] = schedule.split(" ").map(Number);
+  const wibHour = ((hourUtc ?? Number.NaN) + 7) % 24;
+
   expect(minute).toBe(0);
   expect(wibHour).toBeGreaterThanOrEqual(11); // lunch window starts 10:00 WIB; ≥1h of spread
   expect(wibHour).toBeLessThan(16);

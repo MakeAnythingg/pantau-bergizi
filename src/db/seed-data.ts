@@ -6,7 +6,14 @@ export const DEMO_PASSWORD = "demo1234";
 export const MODERATOR_EMAIL = "moderator@pantaubergizi.id";
 
 type SeedSchool = { name: string; code: string; lat: number; lng: number };
-type SeedSppg = { name: string; district: string; profile: SignalProfile; managerEmail?: string; schools: SeedSchool[] };
+
+type SeedSppg = {
+  name: string;
+  district: string;
+  profile: SignalProfile;
+  managerEmail?: string;
+  schools: SeedSchool[];
+};
 
 export const SEED_SPPG: SeedSppg[] = [
   {
@@ -64,7 +71,7 @@ export const SEED_MENUS = [
   { name: "Nasi ayam kecap", composition: "Nasi, ayam kecap, capcay, susu UHT" },
   { name: "Nasi tempe orek", composition: "Nasi, tempe orek, telur rebus, sayur asem, melon" },
   { name: "Nasi pindang ikan", composition: "Nasi, pindang ikan, tumis wortel, pisang" },
-];
+] as const;
 
 export const SEED_NOTES = [
   "Enak, habis semua.",
@@ -72,4 +79,4 @@ export const SEED_NOTES = [
   "Sayurnya kurang asin.",
   "Porsinya pas.",
   "Buahnya segar.",
-];
+] as const;
