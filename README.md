@@ -13,8 +13,9 @@ Karya untuk **Web In Action — Multimedia In Action (MIA) 2026**. Subtema utama
 - [Next.js 16](https://nextjs.org) (App Router, Server Actions) + TypeScript + React 19
 - Tailwind CSS 4 + [shadcn/ui](https://ui.shadcn.com) + [Phosphor Icons](https://phosphoricons.com)
 - PostgreSQL ([Neon](https://neon.com) di produksi) + [Drizzle ORM](https://orm.drizzle.team)
-- Login petugas: cookie bertanda tangan (HMAC) + scrypt, tanpa penyedia auth eksternal
-- [Bun](https://bun.sh) untuk instalasi, skrip, dan tes
+- Login petugas: cookie bertanda tangan (HMAC) + scrypt, tanpa penyedia auth eksternal; batas percobaan login dan log audit di Postgres
+- [Bun](https://bun.sh) untuk instalasi, skrip, dan tes unit/integrasi; [Playwright](https://playwright.dev) untuk tes end-to-end
+- Kualitas kode: [oxlint](https://oxc.rs) (type-aware + anti-slop), oxfmt, knip; CI di GitHub Actions
 - Deploy di [Vercel](https://vercel.com)
 
 Standar teknis (lint, CI, keamanan, privasi, tes, bukti skala): [`docs/engineering-foundation.md`](docs/engineering-foundation.md).
@@ -27,7 +28,7 @@ Butuh [Bun](https://bun.sh) dan PostgreSQL lokal (mis. [Postgres.app](https://po
 git clone https://github.com/MakeAnythingg/pantau-bergizi.git
 cd pantau-bergizi
 bun install
-cp .env.example .env          # sesuaikan DATABASE_URL bila perlu
+cp .env.example .env          # sesuaikan DATABASE_URL; ganti semua secret (openssl rand -base64 48)
 createdb pantau_bergizi
 bun run db:migrate
 bun run db:seed
@@ -70,14 +71,14 @@ bun run db:migrate && bun run db:reset --yes && bun run build && bun start
 ## Progress saat ini
 
 - [x] Fondasi repo: Next.js 16, Tailwind, shadcn/ui, Bun
-- [x] Database PostgreSQL (7 tabel) + migrasi + data simulasi Kota Sukamaju
+- [x] Database PostgreSQL (7 tabel produk + rate_limit + audit_log) + migrasi + data simulasi Kota Sukamaju
 - [x] Login petugas (moderator dan pengelola SPPG) dengan pemeriksaan peran di server
 - [x] Semua halaman sesuai sitemap (masih kerangka)
 - [x] Penambahan data simulasi harian
 - [x] Beranda: papan status dapur hari ini
 - [x] Rapor dapur: status, alasan, cakupan, tren 7 hari, sisa makanan, menu
 - [x] Pengerasan: oxlint (type-aware + anti-slop), oxfmt, knip, CI GitHub Actions, header keamanan
-- [ ] Login: batas percobaan, pencabutan sesi, log audit petugas
+- [x] Login: batas percobaan, pencabutan sesi, log audit petugas (append-only)
 - [x] Tes end-to-end Playwright
 - [ ] Form lapor dua jalur via QR + kode lacak
 - [ ] Aturan sinyal + episode Prioritas
