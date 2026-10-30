@@ -220,7 +220,7 @@ Focused, no smoke tests, no tests for deleted code.
 | `bun run knip` | unused files/exports/deps |
 | `bun test` | unit + integration |
 | `bun run e2e` | Playwright |
-| `bun run check` | format check + lint + typecheck + knip + test |
+| `bun run check` | format check + lint + typecheck + knip + test (e2e runs separately) |
 | `bun run db:generate` / `db:migrate` | drizzle-kit |
 | `bun run db:seed` / `db:reset --yes` | demo data (`DEMO_MODE=true` only) |
 | `bun run db:seed:scale` | national-volume seed, localhost only |

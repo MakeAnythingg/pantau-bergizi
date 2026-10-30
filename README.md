@@ -50,8 +50,10 @@ Kata sandi semua akun: `demo1234` (juga tertulis di halaman `/masuk`).
 
 | Perintah | Fungsi |
 |---|---|
-| `bun run check` | lint + typecheck + tes |
-| `bun test` | tes (butuh database `pantau_bergizi_test`, lihat `.env.test`) |
+| `bun run check` | format + lint + typecheck + knip + tes |
+| `bun test` | tes unit/integrasi (butuh database `pantau_bergizi_test`, lihat `.env.test`) |
+| `bun run e2e` | tes Playwright pada build produksi (butuh database `pantau_bergizi_e2e`; sekali: `bunx playwright install chromium`) |
+| `bun run format` | rapikan format dengan oxfmt |
 | `bun run db:migrate` | terapkan migrasi ke `DATABASE_URL` |
 | `bun run db:seed` | isi data simulasi (hanya jika `DEMO_MODE=true`) |
 | `bun run db:reset --yes` | kosongkan lalu isi ulang data simulasi (hanya jika `DEMO_MODE=true`) |
@@ -74,9 +76,9 @@ bun run db:migrate && bun run db:reset --yes && bun run build && bun start
 - [x] Penambahan data simulasi harian
 - [x] Beranda: papan status dapur hari ini
 - [x] Rapor dapur: status, alasan, cakupan, tren 7 hari, sisa makanan, menu
-- [ ] Pengerasan: oxlint (type-aware + anti-slop), oxfmt, knip, CI GitHub Actions, header keamanan
+- [x] Pengerasan: oxlint (type-aware + anti-slop), oxfmt, knip, CI GitHub Actions, header keamanan
 - [ ] Login: batas percobaan, pencabutan sesi, log audit petugas
-- [ ] Tes end-to-end Playwright
+- [x] Tes end-to-end Playwright
 - [ ] Form lapor dua jalur via QR + kode lacak
 - [ ] Aturan sinyal + episode Prioritas
 - [ ] Dasbor moderator dan pengelola SPPG
