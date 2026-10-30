@@ -464,3 +464,4 @@ Tahap 2 didahulukan karena semua fitur lain menulis ke data yang harus permanen.
 - Pengelola SPPG tidak bisa mengubah atau menolak laporan dapur lain. Tanpa login, tidak ada aksi yang bisa mengubah status.
 - Data tetap ada setelah server di-restart atau di-deploy ulang.
 - Jalur pengalaman menu bisa diselesaikan di bawah 20 detik di HP. Ini diukur pada uji pengguna, bukan diklaim.
+- Setiap angka di halaman Data sudah dicek ulang ke sumber terbaru, lengkap dengan tanggal terbit dan tanggal akses.

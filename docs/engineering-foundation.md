@@ -267,6 +267,13 @@ Naming: code, tables, and enum keys in English; routes and UI copy in Indonesian
 
 **With each feature after 1 Nov:** the report form brings Turnstile, form/lookup rate limits, the hashed tracking code, and the server-side location check; dashboards write audit rows; each feature brings its e2e spec and its indexes.
 
+**Feature specs**, in build order:
+
+1. [`report-form.md`](report-form.md): `/lapor/[code]` and `/lacak`; replaces Playwright spec 5.
+2. [`signals.md`](signals.md): Prioritas episodes and the status they drive.
+3. [`dashboards.md`](dashboards.md): moderator and SPPG dashboards; replaces Playwright spec 6.
+4. [`data-metode.md`](data-metode.md): `/data` and `/metode`.
+
 **Last:** the scale proof and its README section.
 
 ## Left to the builder
