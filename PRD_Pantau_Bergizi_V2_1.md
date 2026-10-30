@@ -132,7 +132,7 @@ flowchart TB
 
 ### F1. Form lapor via QR: dua jalur dalam satu pintu
 
-Form dirancang mobile-first: satu pertanyaan per tampilan, target sentuh ≥44px, dan label eksplisit. Langkah pertama di kedua jalur sama: pelapor memilih **siapa kamu** (Guru/UKS · Siswa · Orang tua) dan **tanggal makan**. Tanggal makan otomatis terisi hari ini (WIB) dan bisa diubah sampai 30 hari ke belakang.
+Form dirancang mobile-first: satu layar yang bisa digulir per jalur (sesuai wireframe), target sentuh ≥44px, dan label eksplisit. Langkah pertama di kedua jalur sama: pelapor memilih **siapa kamu** (Guru/UKS · Siswa · Orang tua) dan **tanggal makan**. Tanggal makan otomatis terisi hari ini (WIB) dan bisa diubah sampai 30 hari ke belakang.
 
 **A. Pengalaman menu** (jalur default, target di bawah 20 detik)
 1. **Nilai** 1–5 berupa ikon wajah: Sangat kurang · Kurang · Cukup · Baik · Sangat baik
