@@ -132,7 +132,7 @@ For the report form, the **per-device** limit (one experience survey per device 
 
 ## Audit trail
 
-Table `audit_log(id, at, actor_user_id, action, entity, entity_id, before jsonb, after jsonb)`, append-only. One helper, `audit(tx, …)`, takes the open Drizzle transaction, so every staff mutation and its audit row commit or roll back together. Typed `action` values (e.g. `report.status_changed`, `episode.forwarding_changed`, `response.created`, `menu.updated`, `demo.reset`); no free-form strings.
+Table `audit_log(id, at, actor_user_id, action, entity, entity_id, before jsonb, after jsonb)`, append-only: a trigger rejects UPDATE, DELETE and TRUNCATE. `actor_user_id` is deliberately not a foreign key, because the reset's `TRUNCATE "user" … CASCADE` would otherwise wipe the log; it is null only for system actions (CLI reset, cron). One helper, `audit(tx, …)`, takes the open Drizzle transaction, so every staff mutation and its audit row commit or roll back together. Typed `action` values (a Postgres enum plus a per-action TypeScript shape in `src/lib/audit.ts`; e.g. `report.status_changed`, `episode.forwarding_changed`, `response.created`, `menu.updated`, `demo.reset`); no free-form strings. Each feature adds its actions, with a migration, when it ships.
 
 The demo reset truncates every table **except** `audit_log`, then writes a `demo.reset` row.
 

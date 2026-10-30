@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { audit } from "@/lib/audit";
 import { hashPassword } from "@/lib/auth";
 import { addDays, todayWIB, wibTime } from "@/lib/date";
 import { type Db, type DbOrTx, one } from "./index";
@@ -8,6 +9,7 @@ import { type SimSchool, simulateDay } from "./simulate";
 
 const SEED_DAYS = 7;
 
+/** Empties every table except audit_log, which outlives resets. */
 export async function truncateAll(db: DbOrTx): Promise<void> {
   await db.execute(
     sql`TRUNCATE response, episode, report, menu, "user", school, sppg, rate_limit RESTART IDENTITY CASCADE`,
@@ -68,11 +70,19 @@ export async function seed(db: DbOrTx, now: Date = new Date()): Promise<void> {
   }
 }
 
-/** Truncate + seed in one transaction, so a failed reset leaves the previous data in place. */
+/** Truncate + seed + audit row in one transaction, so a failed reset leaves the previous data in place. */
 export async function resetDb(db: Db, now: Date = new Date()): Promise<void> {
   await db.transaction(async (tx) => {
     await truncateAll(tx);
     await seed(tx, now);
+    await audit(tx, {
+      action: "demo.reset",
+      actorUserId: null,
+      entity: "database",
+      entityId: null,
+      before: null,
+      after: { seededFor: todayWIB(now) },
+    });
   });
 }
 

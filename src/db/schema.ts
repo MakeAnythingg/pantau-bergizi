@@ -7,6 +7,7 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgEnum,
   primaryKey,
   pgTable,
@@ -32,6 +33,9 @@ export const authorKindEnum = pgEnum("author_kind", ["sppg", "moderator", "repor
 export const episodeRuleEnum = pgEnum("episode_rule", ["auto_multi_school", "teacher_group_reviewed"]);
 export const forwardingEnum = pgEnum("forwarding", ["none", "simulated_puskesmas", "forwarded_by_officer"]);
 export const userRoleEnum = pgEnum("user_role", ["moderator", "sppg_manager"]);
+
+// One value per kind of staff change; features add theirs (with a migration) as they ship. See src/lib/audit.ts.
+export const auditActionEnum = pgEnum("audit_action", ["demo.reset"]);
 
 export const sppg = pgTable("sppg", {
   id: id(),
@@ -161,6 +165,24 @@ export const rateLimit = pgTable(
     count: integer().notNull(),
   },
   (t) => [primaryKey({ columns: [t.key, t.windowStart] })],
+);
+
+// Append-only (UPDATE/DELETE blocked by a trigger, see drizzle/0003). Written only through audit().
+// actor_user_id is deliberately NOT a foreign key: the demo reset truncates "user" with CASCADE, which would
+// otherwise wipe this table too.
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: id(),
+    at: createdNow(),
+    actorUserId: integer(),
+    action: auditActionEnum().notNull(),
+    entity: text().notNull(),
+    entityId: integer(),
+    before: jsonb(),
+    after: jsonb(),
+  },
+  (t) => [index().on(t.at)],
 );
 
 export type NewReport = typeof report.$inferInsert;
