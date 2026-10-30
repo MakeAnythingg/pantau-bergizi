@@ -17,6 +17,8 @@ Karya untuk **Web In Action — Multimedia In Action (MIA) 2026**. Subtema utama
 - [Bun](https://bun.sh) untuk instalasi, skrip, dan tes
 - Deploy di [Vercel](https://vercel.com)
 
+Standar teknis (lint, CI, keamanan, privasi, tes, bukti skala): [`docs/engineering-foundation.md`](docs/engineering-foundation.md).
+
 ## Cara menjalankan
 
 Butuh [Bun](https://bun.sh) dan PostgreSQL lokal (mis. [Postgres.app](https://postgresapp.com)).
@@ -70,8 +72,11 @@ bun run db:migrate && bun run db:reset --yes && bun run build && bun start
 - [x] Login petugas (moderator dan pengelola SPPG) dengan pemeriksaan peran di server
 - [x] Semua halaman sesuai sitemap (masih kerangka)
 - [x] Penambahan data simulasi harian
-- [ ] Beranda: papan status dapur hari ini
-- [ ] Rapor dapur: status, alasan, cakupan, tren 7 hari, sisa makanan, menu
+- [x] Beranda: papan status dapur hari ini
+- [x] Rapor dapur: status, alasan, cakupan, tren 7 hari, sisa makanan, menu
+- [ ] Pengerasan: oxlint (type-aware + anti-slop), oxfmt, knip, CI GitHub Actions, header keamanan
+- [ ] Login: batas percobaan, pencabutan sesi, log audit petugas
+- [ ] Tes end-to-end Playwright
 - [ ] Form lapor dua jalur via QR + kode lacak
 - [ ] Aturan sinyal + episode Prioritas
 - [ ] Dasbor moderator dan pengelola SPPG
