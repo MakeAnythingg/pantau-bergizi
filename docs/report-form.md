@@ -68,8 +68,8 @@ Recipients (teachers/UKS, students, parents) scan a school's QR, submit an exper
 ### Lookup: `/lacak`
 
 - The code is entered in a form and **sent by POST** (Server Action). It never appears in the URL, query string, or history. A wrong code gets a generic "kode tidak ditemukan".
-- Shows: kind, school, consumption date, status (plus `reject_reason` when rejected), and responses on this report in time order: dapur, moderator, and the reporter's own updates. Episode-level responses are out of scope until episodes exist.
-- **Add an update:** a textarea (≤ `NOTE_MAX_CHARS`) that inserts a `response` with `author_kind = reporter`, `author_user_id = null`. It does not change `status`. The action re-sends the code and re-verifies it, so no session or cookie identifies the report. Updates are free text, so they are not public before review (PRD privacy).
+- Shows: kind, school, consumption date, status (plus `reject_reason` when rejected), and responses on this report in time order: dapur, moderator, and the reporter's own updates. If the report is attached to an episode ([`signals.md`](signals.md)), the kitchen's responses on that episode are shown too, labelled "Tanggapan pengelola untuk episode ini".
+- **Add an update:** a textarea (≤ `NOTE_MAX_CHARS`) that inserts a `response` with `author_kind = reporter`, `author_user_id = null`. It does not change `status`. The action re-sends the code and re-verifies it, so no session or cookie identifies the report. Updates are free text, so they are **never public**: only the code holder on `/lacak`, moderators, and the report's own kitchen manager see them (see [`dashboards.md`](dashboards.md)).
 
 ### Rate limits
 
