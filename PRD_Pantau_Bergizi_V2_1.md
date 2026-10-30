@@ -142,7 +142,7 @@ Form dirancang mobile-first: satu layar yang bisa digulir per jalur (sesuai wire
 
 **B. Keluhan kesehatan** (tombol jelas "Ada yang sakit setelah makan?")
 1. **Gejala:** mual/muntah · diare · pusing · lainnya
-2. **Siapa yang mengalami:** dialami sendiri/anak saya · **pengamatan kelompok di sekolah**. Jika memilih pengamatan kelompok, muncul isian **"Perkiraan jumlah terdampak"**.
+2. **Siapa yang mengalami:** dialami sendiri/anak saya · **pengamatan kelompok di sekolah** (hanya untuk Guru/UKS; siswa dan orang tua hanya melihat pilihan pertama). Jika memilih pengamatan kelompok, muncul isian **"Perkiraan jumlah terdampak"**.
 3. **Catatan** opsional
 
 **Sesudah dikirim.** Lokasi diperiksa otomatis di server terhadap koordinat sekolah dalam radius demo 150 m. Hasilnya salah satu dari tiga: *di area sekolah*, *di luar area*, atau *tidak tersedia*. Laporan tetap diterima apa pun hasilnya. Pelapor lalu menerima kode lacak, dan untuk jalur B juga informasi ke mana mencari bantuan.
