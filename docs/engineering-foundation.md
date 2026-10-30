@@ -182,6 +182,7 @@ Results (plans + timings) go in the README. Runs last, once all feature queries 
 | `CRON_SECRET` | Bearer secret Vercel Cron sends to `/api/cron/top-up` |
 | `DEMO_MODE` | `"true"` enables seed/reset |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Added with the report form. Tests use Cloudflare's documented always-pass test keys. |
+| `PUBLIC_BASE_URL` | Canonical site URL (scheme, no trailing slash) for QR codes and share links; never derived from request headers. Added with the school page. |
 
 `.env.example` committed; every other `.env*` gitignored.
 
@@ -269,10 +270,11 @@ Naming: code, tables, and enum keys in English; routes and UI copy in Indonesian
 
 **Feature specs**, in build order:
 
-1. [`report-form.md`](report-form.md): `/lapor/[code]` and `/lacak`; replaces Playwright spec 5.
-2. [`signals.md`](signals.md): Prioritas episodes and the status they drive.
-3. [`dashboards.md`](dashboards.md): moderator and SPPG dashboards; replaces Playwright spec 6.
-4. [`data-metode.md`](data-metode.md): `/data` and `/metode`.
+1. [`school-page.md`](school-page.md): `/sekolah/[code]` with QR, print, and WhatsApp sharing, plus the Rapor per-menu table (F3).
+2. [`report-form.md`](report-form.md): `/lapor/[code]` and `/lacak`; replaces Playwright spec 5.
+3. [`signals.md`](signals.md): Prioritas episodes and the status they drive.
+4. [`dashboards.md`](dashboards.md): moderator and SPPG dashboards; replaces Playwright spec 6.
+5. [`data-metode.md`](data-metode.md): `/data` and `/metode`.
 
 **Last:** the scale proof and its README section.
 

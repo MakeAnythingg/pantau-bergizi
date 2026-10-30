@@ -20,7 +20,7 @@
 
 - Moderator and SPPG UI: review/reject/merge buttons, the close-episode form, the forwarding form, the episode response form, the IP surge flag, and the per-report public counter ("Belum ditanggapi · 18 jam"). These go in the dashboard spec, which wires forms to the functions defined here.
 - Data nasional and Metode (their own content spec).
-- The F3 "menu dengan sisa tertinggi" gap (Rapor polish).
+- The F3 "menu dengan sisa tertinggi" gap (covered by [`school-page.md`](school-page.md)).
 - Changing the F2 thresholds or the rules inside `computeSignal`.
 
 ## Anti-goals
