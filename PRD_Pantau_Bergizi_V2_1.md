@@ -132,7 +132,7 @@ flowchart TB
 
 ### F1. Form lapor via QR: dua jalur dalam satu pintu
 
-Form dirancang mobile-first: satu pertanyaan per tampilan, target sentuh ≥44px, dan label eksplisit. Langkah pertama di kedua jalur sama: pelapor memilih **siapa kamu** (Guru/UKS · Siswa · Orang tua) dan **tanggal makan**. Tanggal makan otomatis terisi hari ini (WIB) dan bisa diubah sampai 30 hari ke belakang.
+Form dirancang mobile-first: satu layar yang bisa digulir per jalur (sesuai wireframe), target sentuh ≥44px, dan label eksplisit. Langkah pertama di kedua jalur sama: pelapor memilih **siapa kamu** (Guru/UKS · Siswa · Orang tua) dan **tanggal makan**. Tanggal makan otomatis terisi hari ini (WIB) dan bisa diubah sampai 30 hari ke belakang.
 
 **A. Pengalaman menu** (jalur default, target di bawah 20 detik)
 1. **Nilai** 1–5 berupa ikon wajah: Sangat kurang · Kurang · Cukup · Baik · Sangat baik
@@ -142,7 +142,7 @@ Form dirancang mobile-first: satu pertanyaan per tampilan, target sentuh ≥44px
 
 **B. Keluhan kesehatan** (tombol jelas "Ada yang sakit setelah makan?")
 1. **Gejala:** mual/muntah · diare · pusing · lainnya
-2. **Siapa yang mengalami:** dialami sendiri/anak saya · **pengamatan kelompok di sekolah**. Jika memilih pengamatan kelompok, muncul isian **"Perkiraan jumlah terdampak"**.
+2. **Siapa yang mengalami:** dialami sendiri/anak saya · **pengamatan kelompok di sekolah** (hanya untuk Guru/UKS; siswa dan orang tua hanya melihat pilihan pertama). Jika memilih pengamatan kelompok, muncul isian **"Perkiraan jumlah terdampak"**.
 3. **Catatan** opsional
 
 **Sesudah dikirim.** Lokasi diperiksa otomatis di server terhadap koordinat sekolah dalam radius demo 150 m. Hasilnya salah satu dari tiga: *di area sekolah*, *di luar area*, atau *tidak tersedia*. Laporan tetap diterima apa pun hasilnya. Pelapor lalu menerima kode lacak, dan untuk jalur B juga informasi ke mana mencari bantuan.
@@ -464,3 +464,4 @@ Tahap 2 didahulukan karena semua fitur lain menulis ke data yang harus permanen.
 - Pengelola SPPG tidak bisa mengubah atau menolak laporan dapur lain. Tanpa login, tidak ada aksi yang bisa mengubah status.
 - Data tetap ada setelah server di-restart atau di-deploy ulang.
 - Jalur pengalaman menu bisa diselesaikan di bawah 20 detik di HP. Ini diukur pada uji pengguna, bukan diklaim.
+- Setiap angka di halaman Data sudah dicek ulang ke sumber terbaru, lengkap dengan tanggal terbit dan tanggal akses.
