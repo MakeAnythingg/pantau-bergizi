@@ -58,7 +58,7 @@ The moderator turns raw reports into trusted signals: review, reject, merge, clo
 | **Gabung duplikat** | sets `duplicate_of` | a target with the same school, kind, and `consumed_on` that is not itself a duplicate (no chains) | `report.merged` |
 | **Selesai** | `reviewed` / `responded` → `closed` | — | `report.status_changed` |
 
-- Each action runs in one transaction: conditional update → `syncEpisode(tx, sppgId, now)` → `audit()`.
+- Each action runs in one transaction: `lockKitchen(tx, sppgId)` → conditional update → `syncEpisode(tx, sppgId, now)` → `audit()`. The lock comes first ([`signals.md`](signals.md) Concurrency).
 - The merge form lists only valid candidates.
 - "Selesai" means the follow-up is closed, not that the food is safe (PRD F4). The UI copy says so.
 
@@ -84,6 +84,10 @@ Flags show as badges on queue items. A **"Ditandai lonjakan"** panel lists the s
 - **Forwarding:** `none` / `simulated_puskesmas` / `forwarded_by_officer`. The last one requires `forwarding_note`. Writes `episode.forwarding_changed`. The copy never claims a notification was sent.
 - Below: the last 10 closed episodes, read-only.
 
+### Moderator: follow-up list ("Dalam tindak lanjut")
+
+- `reviewed` and `responded` reports, most recent activity first (latest response, or `received_at`), 20 per page. Each shows the full thread (kitchen and moderator responses, reporter updates) and the **Selesai** and **Tolak** actions. Without it, a reviewed report could never be closed and a later reporter update would reach no one.
+
 ### Moderator: demo reset
 
 A "Reset data demo" button, rendered and accepted only when `DEMO_MODE=true`, behind a typed confirmation (`RESET`). It runs the same reset as `bun run db:reset`, and the `demo.reset` audit row records the moderator as actor.
@@ -92,7 +96,7 @@ A "Reset data demo" button, rendered and accepted only when `DEMO_MODE=true`, be
 
 - **Status:** their kitchen's status, using the same function as Beranda.
 - **Open episode:** reason, detected-at, overdue timer, and an **episode response form**.
-- **Waiting for a response:** their kitchen's `reviewed` reports with no `sppg` response yet, each with an "N jam" timer since `received_at` and a **report response form**. Reporter updates on these reports are visible here.
+- **Waiting for a response:** their kitchen's `reviewed` and `responded` reports whose latest non-moderator response is **not** from `sppg`. That means the report has never been answered, or the reporter added an update after the kitchen's last answer ("Ada perkembangan baru"). Each shows an "N jam" timer since `received_at` (or since the reporter's update), the thread including reporter updates, and a **report response form**.
 - **Unreviewed reports:** shown only as a count ("N laporan menunggu tinjauan moderator"), with no content.
 - **Menu today:** name + composition, upserting `menu(sppg_id, served_on = today WIB)`, and writing `menu.updated` with before/after. Any other date is refused.
 
@@ -135,14 +139,15 @@ These are the acceptance criteria. Nothing beyond them.
 - The surge, repeat-device, and outside flags trip at their thresholds.
 - The manager view shows unreviewed reports only as a count.
 - A report response moves the report to `responded`, and an episode response clears the overdue label.
+- A reporter update added after the kitchen's response puts the report back in the manager's waiting list, and it stays visible in the moderator's follow-up list, where Selesai closes it.
 - The menu upsert works for today; other dates are refused.
 - `forwarded_by_officer` without a note is refused.
 - Reset is refused unless `DEMO_MODE=true` and `RESET` is typed.
 - Reporter updates never appear on Rapor.
 
 **Playwright** (fulfils the foundation doc's spec 6):
-1. The moderator reviews a seeded teacher group report → the kitchen turns Prioritas on Beranda → the moderator sets forwarding to the simulated Puskesmas.
-2. The manager answers that episode → "Dapur belum menjawab" disappears from Rapor, and the response shows on `/lacak` for the teacher's code.
+1. A Guru/UKS group report (≥5 affected) is submitted through the form, keeping its code → the moderator reviews it → the kitchen turns Prioritas on Beranda → the moderator sets forwarding to the simulated Puskesmas → the manager answers the episode → the response shows on `/lacak` for that code.
+2. On the seeded **overdue** episode, Rapor shows "Dapur belum menjawab" → its manager answers the episode → the label is gone.
 3. The moderator rejects a report with a reason → it leaves the Rapor counts.
 
 ## Left to the builder

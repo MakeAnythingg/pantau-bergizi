@@ -53,13 +53,13 @@ How `computeSignal` learns which reports to keep out of the Prioritas rules is l
 One function, called inside the transaction of **every write that can change a signal**: report insert (the form and the cron top-up), and moderator review, reject, and merge (wired in the dashboard spec). It runs in this order:
 
 1. **Open episode exists:**
-   - Attach every counting signal report of this kitchen that isn't attached yet (`report.episode_id`).
+   - Attach every counting signal **health** report of this kitchen that isn't attached yet (`report.episode_id`). Experience surveys are never attached.
    - Re-run the rules over the episode's **counting attached reports with no time window**. If they no longer reach Prioritas, close it automatically: `closed_at = now`, `closed_by_user_id = null`, `closed_note = "Ditutup otomatis: laporan ditolak — <alasan tolak>"` (the reject reason of the report that tipped it; for a merge, "laporan digabung sebagai duplikat"), and an `episode.closed` audit row with a null actor.
 2. **No open episode, and the live signal is Prioritas:** insert an episode with `rule` = `auto_multi_school` or `teacher_group_reviewed` (whichever rule fired) and attach the reports that fired it. `first_detected_at` defaults to now.
 
 Without a time window, the re-check in step 1 can only close an episode because a report was rejected or merged, never because time passed.
 
-**Concurrency.** The open-episode index becomes **unique** (`episode(sppg_id) where closed_at is null`). If a concurrent insert loses the race, it catches the unique violation, re-reads the open episode, and attaches to it, so the report is never lost.
+**Concurrency.** Every signal-changing transaction (report insert, review, reject, merge, close) **starts** with `lockKitchen(tx, sppgId)` (`pg_advisory_xact_lock` keyed on the kitchen), *before* it inserts or updates any report or episode. `syncEpisode` assumes the lock is held. Taking it first in every path rules out a lock-order deadlock between a moderator holding a report row and an insert holding the kitchen lock. Signal-changing transactions for one kitchen therefore run one at a time, and each one reads the reports the previous one committed (READ COMMITTED takes a fresh snapshot per statement). So two concurrent inserts that only reach the threshold together still open the episode, in whichever commits second. The open-episode index also becomes **unique** (`episode(sppg_id) where closed_at is null`) as a backstop.
 
 ### `closeEpisode(tx, episodeId, note, actorUserId)`
 
@@ -70,7 +70,7 @@ Without a time window, the re-check in step 1 can only close an episode because 
 
 All of it is derived. No snapshot columns.
 
-- **Reason:** `computeSignal` over the episode's counting attached reports (no window), plus "Terdeteksi <tanggal jam> WIB" from `first_detected_at`.
+- **Reason:** episode-specific wording built from the counting attached reports. `computeSignal`'s text says "dalam 24 jam" and doesn't apply. Format: "Terdeteksi <tanggal jam> WIB · <n> keluhan <gejala> dari <m> sekolah sejak terdeteksi, <k> dari area sekolah", or, for `teacher_group_reviewed`, the teacher report line. `computeSignal` is used only to decide whether the rule still holds.
 - **Review label:** for `auto_multi_school` episodes, *Otomatis, belum ditinjau moderator* while any counting attached report is `received`, otherwise *Ditinjau moderator*. A newly attached report flips it back. `teacher_group_reviewed` episodes are always *Ditinjau moderator*.
 - **Overdue:** "Dapur belum menjawab · N jam" when the episode is open, older than `RESPONSE_OVERDUE_HOURS`, and has no `response` with `episode_id` = this episode and `author_kind = sppg`. Only a response to the episode counts; a reply to one of its reports doesn't.
 - **Forwarding:** the existing `forwarding` / `forwarding_note`, shown as the PRD's three labels (the setter is in the dashboard spec).
@@ -112,7 +112,10 @@ The top-up calls `syncEpisode` for each kitchen it writes to.
 These are the acceptance criteria. Nothing beyond them.
 
 **Integration (`bun test`, real Postgres):**
-- 3 health complaints from 2 schools, 1 inside → exactly one episode, with those reports attached. A 4th complaint attaches to it. Two concurrent qualifying inserts still produce one episode and lose no report.
+- 3 health complaints from 2 schools, 1 inside → exactly one episode, with those reports attached. A 4th complaint attaches to it; an experience survey never does.
+- With 1 complaint stored, two concurrent complaint inserts (2 schools, 1 inside) that reach the threshold only together produce exactly one episode with all 3 attached.
+- A concurrent complaint insert and a moderator reject on the same kitchen both commit (no deadlock), and the episode state matches running them one after the other.
+- After the original 24 h window passes, the episode reason says "sejak terdeteksi", never "dalam 24 jam".
 - A Guru/UKS group report with ≥5 affected → Perlu perhatian and no episode. After it's reviewed → a `teacher_group_reviewed` episode.
 - At now + 25 h the open episode still makes the kitchen Prioritas.
 - Rejecting an attached report so the rule fails → closed automatically, with the note, a null `closed_by_user_id`, and a system audit row; the status drops. Merging a duplicate re-checks the episode the same way.
