@@ -6,6 +6,10 @@ const envSchema = z.object({
   // Keys the hash of IPs and emails we must not store raw. Separate from SESSION_SECRET so either can rotate alone.
   IP_HASH_SECRET: z.string().min(32),
   CRON_SECRET: z.string().min(32),
+  // Canonical site URL for QR codes and share links. Never derived from request headers, which can be spoofed.
+  PUBLIC_BASE_URL: z
+    .url({ protocol: /^https?$/ })
+    .refine((v) => !v.endsWith("/"), "PUBLIC_BASE_URL must not end with a slash"),
   DEMO_MODE: z
     .string()
     .optional()

@@ -49,8 +49,9 @@ jobs:
       # Ignored advisories don't reach the running app. Remove an entry once it's fixed upstream.
       #   GHSA-gcqx-w48m-w2h4 (low): deepmerge, only via the shadcn CLI; the app imports shadcn's CSS only. No fixed version.
       #   GHSA-67mh-4wv8-2f99 (moderate): esbuild dev server, via drizzle-kit's @esbuild-kit; drizzle-kit never serves.
+      #   GHSA-g3hv-75wg-m249 (moderate): minimatch glob DoS, only via the shadcn CLI's ts-morph; the app never runs it.
       - name: Dependency audit
-        run: bun audit --ignore=GHSA-gcqx-w48m-w2h4 --ignore=GHSA-67mh-4wv8-2f99
+        run: bun audit --ignore=GHSA-gcqx-w48m-w2h4 --ignore=GHSA-67mh-4wv8-2f99 --ignore=GHSA-g3hv-75wg-m249
 
   test:
     runs-on: ubuntu-latest
