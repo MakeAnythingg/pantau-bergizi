@@ -55,7 +55,7 @@ async function SekolahView({ params }: Pick<PageProps<"/sekolah/[code]">, "param
           href={`/lapor/${school.code}`}
           className={cn(
             buttonVariants(),
-            "mt-7 h-auto w-full flex-col items-start gap-0.5 rounded-2xl px-6 py-3.5 whitespace-normal shadow-md",
+            "mt-7 h-auto w-full flex-col items-start gap-0.5 rounded-2xl px-6 py-3.5 whitespace-normal",
           )}
         >
           <b className="text-lg">Lapor makan siang hari ini</b>

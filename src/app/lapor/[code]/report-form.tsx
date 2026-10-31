@@ -438,7 +438,8 @@ export function ReportForm({
         <Button
           type="submit"
           disabled={busy || !botReady}
-          className={cn("mt-6 h-12 w-full text-base font-bold", health && "bg-destructive hover:bg-destructive/90")}
+          variant={health ? "danger" : "default"}
+          className="mt-6 h-12 w-full text-base font-bold"
         >
           {locating ? "Memeriksa lokasi…" : pending ? "Mengirim…" : health ? "Kirim laporan" : "Kirim penilaian"}
         </Button>

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const button = "h-11 rounded-full bg-card px-5 text-[15px] font-bold text-primary";
+const button = "h-11 px-5 text-[15px] font-bold text-primary";
 
 /** Print, WhatsApp share, and copy-link for one school's form URL. */
 export function ShareActions({ url, schoolName }: { url: string; schoolName: string }) {
