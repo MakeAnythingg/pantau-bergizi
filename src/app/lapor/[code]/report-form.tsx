@@ -227,8 +227,10 @@ function MealDate({ today, minDate }: { today: string; minDate: string }) {
             {longDay.format(toDate(day))}
           </span>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-(--anchor-width) rounded-xl p-3 shadow-lg" align="start" sideOffset={6}>
           <Calendar
+            className="w-full p-0 text-[15px] [--cell-size:--spacing(11)]"
+            classNames={{ root: "w-full" }}
             mode="single"
             locale={idLocale}
             selected={toDate(day)}
