@@ -4,6 +4,18 @@
 
 **Scope source:** each issue links its spec in `docs/`. This roadmap only adds dates, gates, and cut lines. It does not restate scope. Tracking issue: #10.
 
+## Status (1 Nov)
+
+- **First Draft:** `main` tagged `first-draft` (56d11b3).
+- **#3 and #4: built ahead of schedule.** Spec tests pass (89 bun tests, 16 Playwright specs), `bun run check` is green, and sol-loop approved them in 1 round. Both are open as stacked PRs, not merged yet. Merging waits on the prerequisites below.
+- **Also shipped on the #4 branch:** shadcn (Base UI) components on the public forms, refreshed buttons/cards/background, a Lacak link in the header, and Indonesian field errors instead of the browser bubble.
+- **Before merging #3 → #4:**
+  - [ ] Vercel env: `PUBLIC_BASE_URL=https://pantau-bergizi.vercel.app`
+  - [ ] Vercel env: real `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` (invisible-mode widget)
+  - [ ] Run migration `0004_report_device_indexes` on prod (Neon)
+  - [ ] Submit one report by hand on desktop after deploy
+- **Next:** #5 starts on 2 Nov, three days earlier than planned. The freed days are buffer for #6/#7 and the video.
+
 ## Rules for the whole run
 
 - `main` deploys automatically to https://pantau-bergizi.vercel.app, so it has to stay demo-ready. Work on one branch per issue, and merge only when the spec's Tests section passes, `bun run check` is green, and sol-loop has run.
@@ -31,8 +43,8 @@ The §7 video follows one story, and each step needs one issue:
 | Date | Work | Gate at end of day |
 |---|---|---|
 | **1 Nov** | Submit the First Draft (#9): tag `first-draft`, take screenshots of Beranda and Rapor dapur, PDF ≤10 pages, repo + README | Submitted |
-| 2 Nov | #3 school page, QR, print poster, WhatsApp share, Rapor per-menu table | #3 merged |
-| 3–4 Nov | #4 report form (both paths), Turnstile, device cookie, tracking code, `/lacak` | #4 merged |
+| ~~2 Nov~~ 1 Nov ✅ | #3 school page, QR, print poster, WhatsApp share, Rapor per-menu table | Built, PR open; merge after env + migration |
+| ~~3–4 Nov~~ 1 Nov ✅ | #4 report form (both paths), Turnstile, device cookie, tracking code, `/lacak` | Built, PR open; merge after #3 |
 | 5–6 Nov | #5 episodes, `lockKitchen`, `syncEpisode`, `closeEpisode`, Beranda/Rapor episode UI. Start #7 `national.ts` figure re-check in parallel. | **Checkpoint:** #5 merged, otherwise trim #6 (see cut lines) |
 | 7–8 Nov | #6 moderator and SPPG dashboards, "Belum ditanggapi" counter | #6 merged |
 | 8 Nov | #7 `/data` + `/metode`. Praffi approves the Indonesian copy. | #7 merged |
@@ -65,4 +77,4 @@ Same for every issue, taken from #10:
 
 ## Next step
 
-Write the implementation plan for #3 (`docs/school-page.md`), then #4 (`docs/report-form.md`), and start #3 on 2 Nov.
+Merge #3 then #4 once the prerequisites in Status are done, then start #5 (episodes) on 2 Nov.
