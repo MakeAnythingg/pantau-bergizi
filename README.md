@@ -80,7 +80,8 @@ bun run db:migrate && bun run db:reset --yes && bun run build && bun start
 - [x] Pengerasan: oxlint (type-aware + anti-slop), oxfmt, knip, CI GitHub Actions, header keamanan
 - [x] Login: batas percobaan, pencabutan sesi, log audit petugas (append-only)
 - [x] Tes end-to-end Playwright
-- [ ] Form lapor dua jalur via QR + kode lacak
+- [x] Halaman sekolah: QR cetak A4, bagikan ke WhatsApp, tabel rapor per menu
+- [x] Form lapor dua jalur via QR + kode lacak (`/lacak`), Turnstile, batas per perangkat dan per IP
 - [ ] Aturan sinyal + episode Prioritas
 - [ ] Dasbor moderator dan pengelola SPPG
 - [ ] Halaman Data nasional dan Metode

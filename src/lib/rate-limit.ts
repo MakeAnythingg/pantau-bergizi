@@ -7,7 +7,11 @@ import type { KeyedHash } from "./keyed-hash";
 export type RateRule = { limit: number; windowSeconds: number };
 
 // Namespaced keys. The part after the prefix is always a keyedHash, never a raw IP or email.
-export type RateKey = `login:email-ip:${KeyedHash}` | `login:ip:${KeyedHash}`;
+export type RateKey =
+  | `login:email-ip:${KeyedHash}`
+  | `login:ip:${KeyedHash}`
+  | `report:ip:${KeyedHash}`
+  | `lacak:ip:${KeyedHash}`;
 
 const windowStart = (rule: RateRule, now: Date) => {
   const ms = rule.windowSeconds * 1000;
@@ -34,6 +38,11 @@ export async function recordHit(db: DbOrTx, key: RateKey, rule: RateRule, now = 
     .returning({ count: rateLimit.count });
 
   return row?.count ?? 1;
+}
+
+/** Records one hit and says whether it is still within the limit. */
+export async function allowHit(db: DbOrTx, key: RateKey, rule: RateRule, now = new Date()): Promise<boolean> {
+  return (await recordHit(db, key, rule, now)) <= rule.limit;
 }
 
 /** Forgets every window for `key`, e.g. after a successful login. */

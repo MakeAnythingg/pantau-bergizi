@@ -11,6 +11,9 @@ const env = {
   CRON_SECRET: "e2e-cron-e2e-cron-e2e-cron-e2e-cron-00",
   DEMO_MODE: "true",
   PUBLIC_BASE_URL: `http://localhost:${PORT}`,
+  // Cloudflare's documented always-pass dummy keys (invisible widget).
+  TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
+  TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
 };
 
 export default defineConfig({

@@ -1,9 +1,11 @@
 "use client";
 
+import { CopyIcon, PrinterIcon, WhatsappLogoIcon } from "@phosphor-icons/react";
 import { useState } from "react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-const button =
-  "inline-flex min-h-11 items-center justify-center rounded-full bg-white px-5 text-[15px] font-bold text-navy shadow-[0_0_0_1px_rgb(24_36_44/0.08),0_2px_6px_-2px_rgb(24_36_44/0.14)]";
+const button = "h-11 px-5 text-[15px] font-bold text-primary";
 
 /** Print, WhatsApp share, and copy-link for one school's form URL. */
 export function ShareActions({ url, schoolName }: { url: string; schoolName: string }) {
@@ -12,25 +14,29 @@ export function ShareActions({ url, schoolName }: { url: string; schoolName: str
 
   return (
     <div className="flex flex-wrap gap-2.5">
-      <button
+      <Button
         type="button"
+        variant="outline"
         className={button}
         onClick={() => {
           window.print();
         }}
       >
+        <PrinterIcon aria-hidden="true" />
         Cetak QR
-      </button>
+      </Button>
       <a
-        className={button}
         href={`https://wa.me/?text=${encodeURIComponent(text)}`}
         target="_blank"
         rel="noopener noreferrer"
+        className={cn(buttonVariants({ variant: "outline" }), button)}
       >
+        <WhatsappLogoIcon aria-hidden="true" />
         Bagikan ke grup WhatsApp
       </a>
-      <button
+      <Button
         type="button"
+        variant="outline"
         className={button}
         onClick={() => {
           void navigator.clipboard.writeText(url).then(() => {
@@ -38,8 +44,9 @@ export function ShareActions({ url, schoolName }: { url: string; schoolName: str
           });
         }}
       >
+        <CopyIcon aria-hidden="true" />
         {copied ? "Link disalin" : "Salin link"}
-      </button>
+      </Button>
       <output className="sr-only">{copied ? "Link disalin" : ""}</output>
     </div>
   );

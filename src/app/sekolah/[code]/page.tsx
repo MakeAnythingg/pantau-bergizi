@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { QrCode } from "@/components/qr-code";
 import { STATUS_SWATCH } from "@/components/tray";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { getSchoolPage } from "@/db/board";
 import { getDb } from "@/db/index";
 import { getEnv } from "@/lib/env";
@@ -40,20 +42,24 @@ async function SekolahView({ params }: Pick<PageProps<"/sekolah/[code]">, "param
         <h1 className="font-heading text-[32px] leading-[1.05] font-bold tracking-tight sm:text-[44px]">
           {school.name}
         </h1>
-        <Link
-          href={`/sppg/${school.sppgId}`}
-          className="mt-3 inline-flex items-center gap-2 rounded-full bg-rim py-1.5 pr-3.5 pl-2.5 text-sm font-semibold text-ink-2 hover:underline"
+        <Badge
+          variant="outline"
+          render={<Link href={`/sppg/${school.sppgId}`} />}
+          className="mt-3 h-auto gap-2 bg-card py-1.5 pr-3.5 pl-2.5 text-sm font-semibold"
         >
           <i className={cn("size-2.5 rounded-[3px]", STATUS_SWATCH[school.signal.status])} />
           Dapur {school.sppgName}: {STATUS_LABEL[school.signal.status]}
-        </Link>
+        </Badge>
 
         <Link
           href={`/lapor/${school.code}`}
-          className="mt-7 flex min-h-14 flex-col justify-center rounded-2xl bg-navy px-6 py-3.5 text-white shadow-md"
+          className={cn(
+            buttonVariants(),
+            "mt-7 h-auto w-full flex-col items-start gap-0.5 rounded-2xl px-6 py-3.5 whitespace-normal",
+          )}
         >
           <b className="text-lg">Lapor makan siang hari ini</b>
-          <span className="text-sm opacity-90">untuk siswa, guru, dan orang tua di sekolah ini</span>
+          <span className="text-sm font-normal opacity-90">untuk siswa, guru, dan orang tua di sekolah ini</span>
         </Link>
 
         <section aria-label="QR sekolah" className="well mt-7 grid gap-5 sm:grid-cols-[200px_1fr] sm:items-center">
