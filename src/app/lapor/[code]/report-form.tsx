@@ -1,5 +1,6 @@
 "use client";
 
+import { SmileyIcon, SmileyMehIcon, SmileySadIcon, SmileyWinkIcon, SmileyXEyesIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { type ReactNode, type SubmitEvent, startTransition, useActionState, useState } from "react";
 import { Turnstile } from "@/components/turnstile";
@@ -17,11 +18,11 @@ const ROLES: [Role, string][] = [
 ];
 
 const RATINGS = [
-  ["1", "😖", "Sangat kurang"],
-  ["2", "🙁", "Kurang"],
-  ["3", "😐", "Cukup"],
-  ["4", "🙂", "Baik"],
-  ["5", "😋", "Sangat baik"],
+  ["1", SmileyXEyesIcon, "Sangat kurang"],
+  ["2", SmileySadIcon, "Kurang"],
+  ["3", SmileyMehIcon, "Cukup"],
+  ["4", SmileyIcon, "Baik"],
+  ["5", SmileyWinkIcon, "Sangat baik"],
 ] as const;
 
 const LEFTOVERS = [
@@ -288,11 +289,9 @@ export function ReportForm({
         <>
           <Field legend="Nilai">
             <div className="grid grid-cols-5 gap-1.5">
-              {RATINGS.map(([value, face, label]) => (
+              {RATINGS.map(([value, Face, label]) => (
                 <Choice key={value} type="radio" name="rating" value={value} required className="flex-col px-1 py-2">
-                  <span aria-hidden="true" className="text-2xl leading-none">
-                    {face}
-                  </span>
+                  <Face size={28} weight="duotone" aria-hidden="true" />
                   <span className="mt-1 text-center text-[11px] leading-tight font-medium">{label}</span>
                 </Choice>
               ))}
