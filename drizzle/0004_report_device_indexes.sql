@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "report_one_survey_per_device" ON "report" USING btree ("device_hash","school_id","consumed_on") WHERE "report"."kind" = 'experience';--> statement-breakpoint
+CREATE INDEX "report_device_hash_school_id_consumed_on_index" ON "report" USING btree ("device_hash","school_id","consumed_on");

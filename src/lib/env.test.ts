@@ -7,6 +7,8 @@ const base = {
   IP_HASH_SECRET: "i".repeat(32),
   CRON_SECRET: "c".repeat(32),
   PUBLIC_BASE_URL: "https://pantau-bergizi.vercel.app",
+  TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
+  TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
 };
 
 test("rejects missing SESSION_SECRET", () => {

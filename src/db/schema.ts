@@ -14,6 +14,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { NOTE_MAX_CHARS } from "@/lib/thresholds";
@@ -104,6 +105,12 @@ export const report = pgTable(
   (t) => [
     index().on(t.schoolId, t.receivedAt),
     index().on(t.status),
+    // One experience survey per device, school, and meal date (PRD F8). Race-proof; a violation is the
+    // "sudah menilai" message. The plain index serves the repeat-health check, which the partial one can't.
+    uniqueIndex("report_one_survey_per_device")
+      .on(t.deviceHash, t.schoolId, t.consumedOn)
+      .where(sql`${t.kind} = 'experience'`),
+    index().on(t.deviceHash, t.schoolId, t.consumedOn),
     check("report_rating_range", sql`${t.rating} IS NULL OR ${t.rating} BETWEEN 1 AND 5`),
   ],
 );

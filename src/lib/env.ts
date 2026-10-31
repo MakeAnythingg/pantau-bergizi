@@ -10,6 +10,9 @@ const envSchema = z.object({
   PUBLIC_BASE_URL: z
     .url({ protocol: /^https?$/ })
     .refine((v) => !v.endsWith("/"), "PUBLIC_BASE_URL must not end with a slash"),
+  // Cloudflare Turnstile on the report form. Tests use Cloudflare's always-pass dummy keys.
+  TURNSTILE_SITE_KEY: z.string().min(1),
+  TURNSTILE_SECRET_KEY: z.string().min(1),
   DEMO_MODE: z
     .string()
     .optional()
