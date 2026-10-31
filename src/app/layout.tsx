@@ -24,8 +24,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${publicSans.variable} ${zillaSlab.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <header className="print:hidden">
-          <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-8">
+        <header className="mb-6 border-b bg-card print:hidden">
+          <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3.5 sm:px-8">
             <Link
               href="/"
               className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight whitespace-nowrap sm:gap-2.5 sm:text-xl"

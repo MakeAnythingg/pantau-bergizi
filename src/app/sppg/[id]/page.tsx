@@ -323,8 +323,8 @@ function Trend({ trend }: { trend: Rapor["trend"] }) {
             <span className="flex h-[74px] items-end" aria-hidden="true">
               <i
                 className={cn(
-                  "w-full rounded-[7px_7px_3px_3px] shadow-[0_1px_2px_rgb(24_36_44/0.14)]",
-                  d.health ? "bg-alarm" : "bg-white",
+                  "w-full rounded-[7px_7px_3px_3px] shadow-[inset_0_1px_0_rgb(255_255_255/0.18)]",
+                  d.health ? "bg-alarm" : "bg-ink-3/45",
                 )}
                 style={{ height: `${Math.max(4, (d.reports / max) * 100)}%` }}
               />
