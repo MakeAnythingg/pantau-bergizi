@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { TrackedReport } from "@/db/reports";
 import { NOTE_MAX_CHARS } from "@/lib/thresholds";
+import { useFieldErrors } from "@/lib/use-field-errors";
 import { type LacakState, lacakAction } from "./actions";
 
 const STATUS: Record<TrackedReport["status"], string> = {
@@ -42,11 +43,12 @@ const mealDay = (day: string) =>
 export function LacakView() {
   const [state, action, pending] = useActionState<LacakState, FormData>(lacakAction, { status: "idle" });
   const codeId = useId();
+  const { errors, formProps } = useFieldErrors();
 
   return (
     <>
-      <form action={action} className="mt-6">
-        <Field>
+      <form action={action} {...formProps} className="mt-6">
+        <Field data-invalid={errors.code !== undefined}>
           <FieldLabel htmlFor={codeId}>Kode lacak</FieldLabel>
           <Input
             id={codeId}
@@ -58,7 +60,9 @@ export function LacakView() {
             spellCheck={false}
             placeholder="XXXXX-XXXXX"
             className="h-12 bg-card font-mono text-lg uppercase"
+            aria-invalid={errors.code !== undefined}
           />
+          <FieldError>{errors.code}</FieldError>
         </Field>
         <Button type="submit" disabled={pending} className="mt-3 h-12 w-full text-base font-bold">
           {pending ? "Mencari…" : "Lacak"}
@@ -87,6 +91,8 @@ function Thread({
   pending: boolean;
 }) {
   const updateId = useId();
+  const { errors, formProps } = useFieldErrors();
+  const error = errors.update ?? updateError;
 
   return (
     <section aria-label="Laporan kamu" className="mt-6">
@@ -118,9 +124,9 @@ function Thread({
           </ol>
           {report.responses.length === 0 && <p className="text-sm text-muted-foreground">Belum ada tanggapan.</p>}
 
-          <form action={action} className="mt-5">
+          <form action={action} {...formProps} className="mt-5">
             <input type="hidden" name="code" value={code} />
-            <Field data-invalid={updateError !== null}>
+            <Field data-invalid={error !== null}>
               <FieldLabel htmlFor={updateId}>Tambahkan perkembangan</FieldLabel>
               <Textarea
                 id={updateId}
@@ -128,12 +134,12 @@ function Thread({
                 required
                 maxLength={NOTE_MAX_CHARS}
                 rows={3}
-                aria-invalid={updateError !== null}
+                aria-invalid={error !== null}
               />
               <FieldDescription>
                 Hanya terlihat oleh kamu, moderator, dan pengelola dapur. Tidak tampil di halaman publik.
               </FieldDescription>
-              {updateError && <FieldError>{updateError}</FieldError>}
+              <FieldError>{error}</FieldError>
             </Field>
             <Button type="submit" disabled={pending} className="mt-3 h-12 w-full text-base font-bold">
               Kirim perkembangan

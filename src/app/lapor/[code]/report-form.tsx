@@ -17,12 +17,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet, FieldTitle } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet, FieldTitle } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { NOTE_MAX_CHARS } from "@/lib/thresholds";
+import { useFieldErrors } from "@/lib/use-field-errors";
 import { cn } from "@/lib/utils";
 import { type ReportState, submitReportAction } from "./actions";
 
@@ -270,6 +271,7 @@ export function ReportForm({
   const [locating, setLocating] = useState(false);
   const [botReady, setBotReady] = useState(false);
   const countId = useId();
+  const { errors, formProps } = useFieldErrors();
   const noteId = useId();
 
   if (state.status === "done") return <Success kind={state.kind} code={state.code} />;
@@ -310,7 +312,7 @@ export function ReportForm({
   const groupAllowed = role === "teacher";
 
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="pb-6">
+    <form onSubmit={(e) => void onSubmit(e)} {...formProps} className="pb-6">
       <input type="hidden" name="school" value={school.code} />
       <input type="hidden" name="kind" value={path} />
 
@@ -354,7 +356,7 @@ export function ReportForm({
               onValueChange={setSubject}
             />
             {subject === "group" && groupAllowed && (
-              <Field>
+              <Field data-invalid={errors.affectedCount !== undefined}>
                 <FieldLabel htmlFor={countId}>Perkiraan jumlah terdampak</FieldLabel>
                 <Input
                   id={countId}
@@ -365,7 +367,9 @@ export function ReportForm({
                   max={5000}
                   inputMode="numeric"
                   className="h-11 w-32 bg-card text-[15px]"
+                  aria-invalid={errors.affectedCount !== undefined}
                 />
+                <FieldError>{errors.affectedCount}</FieldError>
               </Field>
             )}
           </>

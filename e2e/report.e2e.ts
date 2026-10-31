@@ -79,3 +79,11 @@ test("a second survey from the same browser for the same school and date is refu
     "Kamu sudah menilai makanan tanggal ini. Untuk koreksi, tambahkan perkembangan lewat kode lacak.",
   );
 });
+
+test("an empty /lacak submit shows an Indonesian error under the field, not the browser bubble", async ({ page }) => {
+  await page.goto("/lacak");
+  await page.getByRole("button", { name: "Lacak", exact: true }).click();
+
+  await expect(page.getByRole("alert").filter({ hasText: "Wajib diisi." })).toBeVisible();
+  await expect(page.getByLabel("Kode lacak")).toBeFocused();
+});
