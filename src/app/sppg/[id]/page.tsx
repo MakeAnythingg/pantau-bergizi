@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 import { STATUS_FILL } from "@/components/tray";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getRapor, type Rapor } from "@/db/board";
 import { getDb } from "@/db/index";
 import { addDays, formatDayWIB, formatTimeWIB, formatWeekdayWIB, todayWIB } from "@/lib/date";
@@ -248,37 +249,39 @@ function PerMenu({ perMenu: { days, mostLeftover } }: { perMenu: Rapor["perMenu"
           {percent(mostLeftover.leftoverLots)} laporan
         </p>
       )}
-      <div className="mt-3.5 rounded-[20px] bg-white px-6 py-1 shadow-[0_0_0_1px_rgb(24_36_44/0.05),0_6px_18px_-12px_rgb(24_36_44/0.35)]">
-        <p
-          aria-hidden="true"
-          className="hidden grid-cols-[130px_1fr_170px_150px] gap-x-4 pt-3 pb-1 text-[13px] font-semibold text-ink-3 sm:grid"
-        >
-          <span>Tanggal makan</span>
-          <span>Menu</span>
-          <span>Nilai</span>
-          <span>Sisa banyak</span>
-        </p>
-        <ul className="divide-y divide-well">
-          {days.map((d) => (
-            <li
-              key={d.day}
-              className="grid grid-cols-2 gap-x-4 gap-y-1 py-3 text-sm sm:grid-cols-[130px_1fr_170px_150px] sm:items-center"
-            >
-              <span className="font-semibold whitespace-nowrap">{shortDay(d.day)}</span>
-              <span className={cn("max-sm:text-right", d.menu === null && "text-ink-3")}>
-                {d.menu ?? "menu belum diisi"}
-              </span>
-              <span className="whitespace-nowrap text-ink-2">
-                <span className="sm:sr-only">Nilai </span>
-                {d.rating === null ? "–" : `${decimal(d.rating)} · ${d.rated} laporan`}
-              </span>
-              <span className="whitespace-nowrap text-ink-2 max-sm:text-right">
-                <span className="sm:sr-only">Sisa banyak </span>
-                {d.leftoverLots === null ? "–" : `${percent(d.leftoverLots)} laporan`}
-              </span>
-            </li>
-          ))}
-        </ul>
+      <div className="mt-3.5 rounded-[20px] bg-white px-4 py-1 shadow-[0_0_0_1px_rgb(24_36_44/0.05),0_6px_18px_-12px_rgb(24_36_44/0.35)] sm:px-6">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tanggal makan</TableHead>
+              <TableHead className="max-sm:hidden">Menu</TableHead>
+              <TableHead>Nilai</TableHead>
+              <TableHead>Sisa banyak</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {days.map((d) => (
+              <TableRow key={d.day}>
+                <TableCell className="whitespace-normal">
+                  <b className="font-semibold whitespace-nowrap">{shortDay(d.day)}</b>
+                  {/* On a phone the menu sits under its date instead of in its own column. */}
+                  <span className={cn("block sm:hidden", d.menu === null ? "text-ink-3" : "text-ink-2")}>
+                    {d.menu ?? "menu belum diisi"}
+                  </span>
+                </TableCell>
+                <TableCell className={cn("max-sm:hidden", d.menu === null && "text-ink-3")}>
+                  {d.menu ?? "menu belum diisi"}
+                </TableCell>
+                <TableCell className="text-ink-2 max-sm:whitespace-normal">
+                  {d.rating === null ? "–" : `${decimal(d.rating)} · ${d.rated} laporan`}
+                </TableCell>
+                <TableCell className="text-ink-2 max-sm:whitespace-normal">
+                  {d.leftoverLots === null ? "–" : `${percent(d.leftoverLots)} laporan`}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </section>
   );

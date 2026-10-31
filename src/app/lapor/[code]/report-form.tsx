@@ -1,9 +1,28 @@
 "use client";
 
-import { SmileyIcon, SmileyMehIcon, SmileySadIcon, SmileyWinkIcon, SmileyXEyesIcon } from "@phosphor-icons/react";
+import {
+  CalendarBlankIcon,
+  SmileyIcon,
+  SmileyMehIcon,
+  SmileySadIcon,
+  SmileyWinkIcon,
+  SmileyXEyesIcon,
+  WarningIcon,
+} from "@phosphor-icons/react";
 import Link from "next/link";
-import { type ReactNode, type SubmitEvent, startTransition, useActionState, useState } from "react";
+import { type ReactNode, type SubmitEvent, startTransition, useActionState, useId, useState } from "react";
+import { id as idLocale } from "react-day-picker/locale";
 import { Turnstile } from "@/components/turnstile";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet, FieldTitle } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { NOTE_MAX_CHARS } from "@/lib/thresholds";
 import { cn } from "@/lib/utils";
 import { type ReportState, submitReportAction } from "./actions";
 
@@ -11,7 +30,9 @@ type Path = "experience" | "health";
 
 type Role = "teacher" | "student" | "parent";
 
-const ROLES: [Role, string][] = [
+type Options<V extends string> = readonly (readonly [V, ReactNode])[];
+
+const ROLES: Options<Role> = [
   ["teacher", "Guru/UKS"],
   ["student", "Siswa"],
   ["parent", "Orang tua"],
@@ -25,26 +46,26 @@ const RATINGS = [
   ["5", SmileyWinkIcon, "Sangat baik"],
 ] as const;
 
-const LEFTOVERS = [
+const LEFTOVERS: Options<string> = [
   ["none", "Habis"],
   ["little", "Sisa sedikit"],
   ["lots", "Sisa banyak"],
-] as const;
+];
 
-const PROBLEMS = [
+const PROBLEMS: Options<string> = [
   ["stale", "Basi/berbau"],
   ["foreign_object", "Benda asing"],
   ["small_portion", "Porsi kurang"],
   ["late", "Terlambat"],
   ["none", "Tidak ada masalah"],
-] as const;
+];
 
-const SYMPTOMS = [
+const SYMPTOMS: Options<string> = [
   ["nausea", "Mual/muntah"],
   ["diarrhea", "Diare"],
   ["dizzy", "Pusing"],
   ["other", "Lainnya"],
-] as const;
+];
 
 const LOCATE_TIMEOUT_MS = 5000;
 
@@ -75,55 +96,153 @@ function locate(): Promise<{ lat: number; lng: number } | null> {
   });
 }
 
-const chip =
-  "flex min-h-11 cursor-pointer items-center justify-center rounded-xl bg-white px-3.5 py-2 text-[15px] font-semibold shadow-[0_0_0_1px_rgb(24_36_44/0.08)] has-checked:bg-navy has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-navy";
+// The radio or checkbox is an invisible overlay on its card, so it stays focusable without taking layout space.
+const overlay = "pointer-events-none absolute inset-0 size-full rounded-lg opacity-0";
 
-function Choice({
-  type,
+// Choice cards: white on the grey page, full navy when picked.
+const card =
+  "relative bg-card has-data-checked:border-primary has-data-checked:bg-primary has-data-checked:text-primary-foreground";
+
+/**
+ * One-of-N choice cards. Controlled (value from React state, null = none picked) and submitted through one hidden
+ * input: Base UI doesn't mark a pre-selected controlled radio as checked for form data. No native `required`: the
+ * server answers a missing pick with a clear message.
+ */
+function Choices<V extends string>({
+  legend,
   name,
+  options,
   value,
-  required,
-  checked,
-  onChange,
+  onValueChange,
   className,
-  children,
 }: {
-  type: "radio" | "checkbox";
+  legend: string;
   name: string;
-  value: string;
-  required?: boolean;
-  checked?: boolean;
-  onChange?: (checked: boolean) => void;
-  className?: string;
-  children: ReactNode;
+  options: Options<V>;
+  value: V | null;
+  onValueChange: (value: V) => void;
+  className?: string | undefined;
 }) {
+  const base = useId();
+
   return (
-    <label className={cn(chip, className)}>
-      <input
-        type={type}
-        name={name}
+    <FieldSet>
+      <FieldLegend variant="label">{legend}</FieldLegend>
+      {value !== null && <input type="hidden" name={name} value={value} />}
+      <RadioGroup<V | null>
         value={value}
-        required={required}
-        checked={checked}
-        onChange={
-          onChange &&
-          ((e) => {
-            onChange(e.currentTarget.checked);
-          })
-        }
-        className="sr-only"
-      />
-      {children}
-    </label>
+        onValueChange={(v) => {
+          if (v !== null) onValueChange(v);
+        }}
+        className={className}
+      >
+        {options.map(([v, label]) => (
+          <FieldLabel key={v} htmlFor={`${base}-${v}`} className={card}>
+            <Field orientation="horizontal" className="min-h-11 justify-center">
+              <RadioGroupItem value={v} id={`${base}-${v}`} className={overlay} />
+              <FieldTitle className="justify-center text-center text-[15px]">{label}</FieldTitle>
+            </Field>
+          </FieldLabel>
+        ))}
+      </RadioGroup>
+    </FieldSet>
   );
 }
 
-function Field({ legend, children }: { legend: string; children: ReactNode }) {
+/** Any-of-N choice cards; each checked one submits `name=value`. */
+function Checks({
+  legend,
+  name,
+  options,
+  checked,
+  onToggle,
+  className,
+}: {
+  legend: string;
+  name: string;
+  options: Options<string>;
+  checked?: ReadonlySet<string> | undefined;
+  onToggle?: ((value: string, checked: boolean) => void) | undefined;
+  className?: string | undefined;
+}) {
+  const base = useId();
+
   return (
-    <fieldset className="mt-6">
-      <legend className="mb-2.5 text-[15px] font-bold">{legend}</legend>
-      {children}
-    </fieldset>
+    <FieldSet>
+      <FieldLegend variant="label">{legend}</FieldLegend>
+      <div className={className}>
+        {options.map(([v, label]) => (
+          <FieldLabel key={v} htmlFor={`${base}-${v}`} className={card}>
+            <Field orientation="horizontal" className="min-h-11 justify-center">
+              <Checkbox
+                id={`${base}-${v}`}
+                name={name}
+                value={v}
+                className={overlay}
+                checked={checked?.has(v)}
+                onCheckedChange={
+                  onToggle &&
+                  ((c) => {
+                    onToggle(v, c);
+                  })
+                }
+              />
+              <FieldTitle className="text-[15px]">{label}</FieldTitle>
+            </Field>
+          </FieldLabel>
+        ))}
+      </div>
+    </FieldSet>
+  );
+}
+
+/** "YYYY-MM-DD" ↔ a local Date at midnight, which is what the calendar works in. */
+const toDate = (day: string) => new Date(`${day}T00:00:00`);
+
+const toDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const longDay = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long" });
+
+/** Meal-date picker, limited to the backdate window. Submits `consumedOn` as YYYY-MM-DD. */
+function MealDate({ today, minDate }: { today: string; minDate: string }) {
+  const [day, setDay] = useState(today);
+  const [open, setOpen] = useState(false);
+  const triggerId = useId();
+  const chosenId = useId();
+
+  return (
+    <Field>
+      <FieldLabel htmlFor={triggerId}>Tanggal makan</FieldLabel>
+      <input type="hidden" name="consumedOn" value={day} />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger
+          id={triggerId}
+          aria-describedby={chosenId}
+          render={<Button variant="outline" className="h-11 w-full justify-start bg-card text-[15px] font-normal" />}
+        >
+          <CalendarBlankIcon aria-hidden="true" />
+          <span id={chosenId}>
+            {day === today ? "Hari ini, " : ""}
+            {longDay.format(toDate(day))}
+          </span>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            locale={idLocale}
+            selected={toDate(day)}
+            defaultMonth={toDate(day)}
+            disabled={[{ before: toDate(minDate) }, { after: toDate(today) }]}
+            onSelect={(d) => {
+              if (!d) return;
+              setDay(toDay(d));
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </Field>
   );
 }
 
@@ -143,10 +262,13 @@ export function ReportForm({
   const [state, action, pending] = useActionState<ReportState, FormData>(submitReportAction, { status: "idle" });
   const [path, setPath] = useState<Path>("experience");
   const [role, setRole] = useState<Role | null>(null);
+  const [leftover, setLeftover] = useState<string | null>(null);
   const [subject, setSubject] = useState<"self" | "group">("self");
   const [problems, setProblems] = useState<ReadonlySet<string>>(new Set());
   const [locating, setLocating] = useState(false);
   const [botReady, setBotReady] = useState(false);
+  const countId = useId();
+  const noteId = useId();
 
   if (state.status === "done") return <Success kind={state.kind} code={state.code} />;
 
@@ -183,6 +305,7 @@ export function ReportForm({
 
   const busy = locating || pending;
   const health = path === "health";
+  const groupAllowed = role === "teacher";
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="pb-6">
@@ -195,200 +318,142 @@ export function ReportForm({
       </h1>
       {health && <p className="mt-1 text-ink-2">{school.name}</p>}
 
-      <Field legend="Saya">
-        <div className="grid grid-cols-3 gap-2">
-          {ROLES.map(([value, label]) => (
-            <Choice
-              key={value}
-              type="radio"
-              name="reporterRole"
-              value={value}
-              required
-              checked={role === value}
-              onChange={() => {
-                setRole(value);
+      <FieldGroup className="mt-6 gap-6">
+        <Choices
+          legend="Saya"
+          name="reporterRole"
+          options={ROLES}
+          value={role}
+          onValueChange={(r) => {
+            setRole(r);
 
-                if (value !== "teacher") setSubject("self");
-              }}
-            >
-              {label}
-            </Choice>
-          ))}
-        </div>
-      </Field>
-
-      <label className="mt-6 block">
-        <span className="mb-2.5 block text-[15px] font-bold">Tanggal makan</span>
-        <input
-          type="date"
-          name="consumedOn"
-          required
-          defaultValue={today}
-          min={minDate}
-          max={today}
-          className="min-h-11 w-full rounded-xl bg-white px-3.5 text-[15px] shadow-[0_0_0_1px_rgb(24_36_44/0.08)]"
+            if (r !== "teacher") setSubject("self");
+          }}
+          className="grid-cols-3"
         />
-      </label>
 
-      {health ? (
-        <>
-          <Field legend="Gejala">
-            <div className="grid grid-cols-2 gap-2">
-              {SYMPTOMS.map(([value, label]) => (
-                <Choice key={value} type="checkbox" name="symptoms" value={value}>
-                  {label}
-                </Choice>
-              ))}
-            </div>
-          </Field>
-          <Field legend="Yang mengalami">
-            <div className="grid gap-2">
-              <Choice
-                type="radio"
-                name="subject"
-                value="self"
-                required
-                checked={subject === "self"}
-                onChange={() => {
-                  setSubject("self");
-                }}
-              >
-                Saya / anak saya
-              </Choice>
-              {role === "teacher" && (
-                <Choice
-                  type="radio"
-                  name="subject"
-                  value="group"
-                  checked={subject === "group"}
-                  onChange={() => {
-                    setSubject("group");
-                  }}
-                >
-                  Pengamatan kelompok di sekolah
-                </Choice>
-              )}
-            </div>
-            {subject === "group" && role === "teacher" && (
-              <label className="mt-3 block">
-                <span className="mb-1.5 block text-sm font-semibold">Perkiraan jumlah terdampak</span>
-                <input
+        <MealDate today={today} minDate={minDate} />
+
+        {health ? (
+          <>
+            <Checks legend="Gejala" name="symptoms" options={SYMPTOMS} className="grid grid-cols-2 gap-2" />
+            <Choices
+              legend="Yang mengalami"
+              name="subject"
+              options={
+                groupAllowed
+                  ? [
+                      ["self", "Saya / anak saya"],
+                      ["group", "Pengamatan kelompok di sekolah"],
+                    ]
+                  : [["self", "Saya / anak saya"]]
+              }
+              value={subject}
+              onValueChange={setSubject}
+            />
+            {subject === "group" && groupAllowed && (
+              <Field>
+                <FieldLabel htmlFor={countId}>Perkiraan jumlah terdampak</FieldLabel>
+                <Input
+                  id={countId}
                   type="number"
                   name="affectedCount"
                   required
                   min={1}
                   max={5000}
                   inputMode="numeric"
-                  className="min-h-11 w-32 rounded-xl bg-white px-3.5 text-[15px] shadow-[0_0_0_1px_rgb(24_36_44/0.08)]"
+                  className="h-11 w-32 bg-card text-[15px]"
                 />
-              </label>
+              </Field>
             )}
-          </Field>
-        </>
-      ) : (
-        <>
-          <Field legend="Nilai">
-            <div className="grid grid-cols-5 gap-1.5">
-              {RATINGS.map(([value, Face, label]) => (
-                <Choice key={value} type="radio" name="rating" value={value} required className="flex-col px-1 py-2">
-                  <Face size={28} weight="duotone" aria-hidden="true" />
-                  <span className="mt-1 text-center text-[11px] leading-tight font-medium">{label}</span>
-                </Choice>
-              ))}
-            </div>
-          </Field>
-          <Field legend="Seberapa habis?">
-            <div className="grid grid-cols-3 gap-2">
-              {LEFTOVERS.map(([value, label]) => (
-                <Choice key={value} type="radio" name="leftover" value={value} required>
-                  {label}
-                </Choice>
-              ))}
-            </div>
-          </Field>
-          <Field legend="Ada masalah?">
-            <div className="flex flex-wrap gap-2">
-              {PROBLEMS.map(([value, label]) => (
-                <Choice
-                  key={value}
-                  type="checkbox"
-                  name="problems"
-                  value={value}
-                  checked={problems.has(value)}
-                  onChange={(checked) => {
-                    toggleProblem(value, checked);
-                  }}
-                >
-                  {label}
-                </Choice>
-              ))}
-            </div>
-          </Field>
-        </>
-      )}
+          </>
+        ) : (
+          <>
+            <FieldSet>
+              <FieldLegend variant="label">Nilai</FieldLegend>
+              <RadioGroup name="rating" className="grid-cols-5 gap-1.5">
+                {RATINGS.map(([value, Face, label]) => (
+                  <FieldLabel key={value} htmlFor={`rating-${value}`} className={card}>
+                    <Field className="items-center gap-1 px-0.5 py-2 text-center">
+                      <RadioGroupItem value={value} id={`rating-${value}`} className={overlay} />
+                      <Face size={28} weight="duotone" aria-hidden="true" />
+                      <FieldTitle className="justify-center text-[11px] leading-tight">{label}</FieldTitle>
+                    </Field>
+                  </FieldLabel>
+                ))}
+              </RadioGroup>
+            </FieldSet>
+            <Choices
+              legend="Seberapa habis?"
+              name="leftover"
+              options={LEFTOVERS}
+              value={leftover}
+              onValueChange={setLeftover}
+              className="grid-cols-3"
+            />
+            <Checks
+              legend="Ada masalah?"
+              name="problems"
+              options={PROBLEMS}
+              checked={problems}
+              onToggle={toggleProblem}
+              className="flex flex-wrap gap-2 *:w-auto"
+            />
+          </>
+        )}
 
-      <label className="mt-6 block">
-        <span className="mb-2.5 block text-[15px] font-bold">Catatan (opsional)</span>
-        <textarea
-          name="note"
-          maxLength={300}
-          rows={3}
-          className="w-full rounded-xl bg-white px-3.5 py-2.5 text-[15px] shadow-[0_0_0_1px_rgb(24_36_44/0.08)]"
-        />
-      </label>
+        <Field>
+          <FieldLabel htmlFor={noteId}>Catatan (opsional)</FieldLabel>
+          <Textarea id={noteId} name="note" maxLength={NOTE_MAX_CHARS} rows={3} className="bg-card text-[15px]" />
+        </Field>
+      </FieldGroup>
 
       <Turnstile siteKey={siteKey} onReady={setBotReady} />
 
       {state.status === "error" && (
-        <p role="alert" className="mt-4 rounded-xl bg-alarm-soft px-4 py-3 text-sm font-semibold text-alarm">
-          {state.message}
-        </p>
+        <Alert variant="destructive" className="mt-4">
+          <WarningIcon aria-hidden="true" />
+          <AlertDescription className="font-semibold text-destructive">{state.message}</AlertDescription>
+        </Alert>
       )}
 
       {state.status === "repeat_health" ? (
-        <div role="alert" className="mt-4 rounded-xl bg-caution/15 px-4 py-3 text-sm">
-          <p className="font-semibold">
-            Kamu sudah melapor untuk tanggal ini. Punya kode lacak? Tambahkan perkembangan di{" "}
-            <Link href="/lacak" className="text-navy underline">
-              /lacak
-            </Link>
-            .
-          </p>
-          <button
-            type="submit"
-            name="confirmRepeat"
-            value="1"
-            disabled={busy || !botReady}
-            className="mt-3 min-h-11 w-full rounded-xl bg-navy px-4 font-bold text-white disabled:opacity-60"
-          >
-            Tetap kirim sebagai laporan baru
-          </button>
-        </div>
+        <Alert className="mt-4">
+          <WarningIcon aria-hidden="true" />
+          <AlertTitle>Kamu sudah melapor untuk tanggal ini.</AlertTitle>
+          <AlertDescription>
+            Punya kode lacak? Tambahkan perkembangan di <Link href="/lacak">/lacak</Link>.
+            <Button
+              type="submit"
+              name="confirmRepeat"
+              value="1"
+              disabled={busy || !botReady}
+              className="mt-3 h-11 w-full text-[15px]"
+            >
+              Tetap kirim sebagai laporan baru
+            </Button>
+          </AlertDescription>
+        </Alert>
       ) : (
-        <button
+        <Button
           type="submit"
           disabled={busy || !botReady}
-          className={cn(
-            "mt-6 min-h-12 w-full rounded-xl px-4 text-base font-bold text-white disabled:opacity-60",
-            health ? "bg-alarm" : "bg-navy",
-          )}
+          className={cn("mt-6 h-12 w-full text-base font-bold", health && "bg-destructive hover:bg-destructive/90")}
         >
           {locating ? "Memeriksa lokasi…" : pending ? "Mengirim…" : health ? "Kirim laporan" : "Kirim penilaian"}
-        </button>
+        </Button>
       )}
 
-      <button
+      <Button
         type="button"
+        variant={health ? "outline" : "destructive"}
         onClick={() => {
           setPath(health ? "experience" : "health");
         }}
-        className={cn(
-          "mt-6 flex min-h-12 w-full items-center justify-between rounded-xl px-4 text-left font-bold",
-          health ? "bg-white text-navy" : "bg-alarm-soft text-alarm",
-        )}
+        className={cn("mt-6 h-12 w-full justify-between text-[15px] font-bold", health && "bg-card text-primary")}
       >
         {health ? "← Kembali ke penilaian menu" : "⚠ Ada yang sakit setelah makan? →"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -406,30 +471,32 @@ function Success({ kind, code }: { kind: Path; code: string }) {
         <p data-testid="tracking-code" className="mt-1 font-mono text-[32px] font-bold tracking-wider">
           {code}
         </p>
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => {
             void navigator.clipboard.writeText(code).then(() => {
               setCopied(true);
             });
           }}
-          className="mt-3 min-h-11 rounded-full bg-white px-5 font-bold text-navy shadow-sm"
+          className="mt-3 h-11 rounded-full bg-card px-5 text-[15px] font-bold text-primary"
         >
           {copied ? "Kode disalin" : "Salin kode"}
-        </button>
+        </Button>
         <p className="mt-3 text-sm text-ink-2">
           Simpan atau screenshot kode ini. Kode hanya ditampilkan sekali dan tidak disimpan di perangkat ini.
         </p>
       </div>
       {kind === "health" && (
-        <p className="mt-5 rounded-xl bg-alarm-soft px-4 py-3 text-sm font-semibold text-alarm">
-          Butuh bantuan? Hubungi UKS / Puskesmas terdekat. Keadaan darurat: 119.
-        </p>
+        <Alert variant="destructive" className="mt-5 bg-alarm-soft">
+          <WarningIcon aria-hidden="true" />
+          <AlertTitle>Butuh bantuan?</AlertTitle>
+          <AlertDescription className="text-destructive">
+            Hubungi UKS / Puskesmas terdekat. Keadaan darurat: 119.
+          </AlertDescription>
+        </Alert>
       )}
-      <Link
-        href="/lacak"
-        className="mt-5 flex min-h-12 items-center justify-center rounded-xl bg-navy px-4 font-bold text-white"
-      >
+      <Link href="/lacak" className={cn(buttonVariants(), "mt-5 h-12 w-full text-base font-bold")}>
         Lacak laporan
       </Link>
     </section>

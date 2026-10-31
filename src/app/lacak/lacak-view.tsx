@@ -1,7 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { WarningIcon } from "@phosphor-icons/react";
+import { useActionState, useId } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import type { TrackedReport } from "@/db/reports";
+import { NOTE_MAX_CHARS } from "@/lib/thresholds";
 import { type LacakState, lacakAction } from "./actions";
 
 const STATUS: Record<TrackedReport["status"], string> = {
@@ -18,9 +27,6 @@ const AUTHOR: Record<TrackedReport["responses"][number]["authorKind"], string> =
   reporter: "Perkembangan dari kamu",
 };
 
-const field = "w-full rounded-xl bg-white px-3.5 text-[15px] shadow-[0_0_0_1px_rgb(24_36_44/0.08)]";
-const primary = "min-h-12 w-full rounded-xl bg-navy px-4 font-bold text-white disabled:opacity-60";
-
 const when = (d: Date) =>
   d.toLocaleString("id-ID", {
     timeZone: "Asia/Jakarta",
@@ -35,13 +41,15 @@ const mealDay = (day: string) =>
 
 export function LacakView() {
   const [state, action, pending] = useActionState<LacakState, FormData>(lacakAction, { status: "idle" });
+  const codeId = useId();
 
   return (
     <>
       <form action={action} className="mt-6">
-        <label className="block">
-          <span className="mb-2 block text-[15px] font-bold">Kode lacak</span>
-          <input
+        <Field>
+          <FieldLabel htmlFor={codeId}>Kode lacak</FieldLabel>
+          <Input
+            id={codeId}
             name="code"
             required
             maxLength={20}
@@ -49,18 +57,19 @@ export function LacakView() {
             autoCapitalize="characters"
             spellCheck={false}
             placeholder="XXXXX-XXXXX"
-            className={`${field} min-h-12 font-mono text-lg uppercase`}
+            className="h-12 bg-card font-mono text-lg uppercase"
           />
-        </label>
-        <button type="submit" disabled={pending} className={`${primary} mt-3`}>
+        </Field>
+        <Button type="submit" disabled={pending} className="mt-3 h-12 w-full text-base font-bold">
           {pending ? "Mencari…" : "Lacak"}
-        </button>
+        </Button>
       </form>
 
       {state.status === "error" && (
-        <p role="alert" className="mt-4 rounded-xl bg-alarm-soft px-4 py-3 text-sm font-semibold text-alarm">
-          {state.message}
-        </p>
+        <Alert variant="destructive" className="mt-4">
+          <WarningIcon aria-hidden="true" />
+          <AlertDescription className="font-semibold text-destructive">{state.message}</AlertDescription>
+        </Alert>
       )}
 
       {state.status === "found" && <Thread state={state} action={action} pending={pending} />}
@@ -77,47 +86,61 @@ function Thread({
   action: (form: FormData) => void;
   pending: boolean;
 }) {
+  const updateId = useId();
+
   return (
-    <section aria-label="Laporan kamu" className="well mt-6">
-      <p className="text-sm font-semibold text-ink-3">
-        {report.kind === "health" ? "Keluhan kesehatan" : "Penilaian menu"} · {report.schoolName}
-      </p>
-      <p className="mt-1 text-sm text-ink-2">Tanggal makan {mealDay(report.consumedOn)}</p>
-      <p className="mt-3 text-lg font-bold">{STATUS[report.status]}</p>
-      {report.status === "rejected" && report.rejectReason && (
-        <p className="text-sm text-ink-2">Alasan: {report.rejectReason}</p>
-      )}
-
-      <ol className="mt-4 grid gap-2.5">
-        {report.responses.map((r) => (
-          <li key={r.id} className="rounded-xl bg-white px-3.5 py-2.5 text-sm">
-            <b className="block text-xs text-ink-3">
-              {AUTHOR[r.authorKind]}, {when(r.createdAt)}
-            </b>
-            {r.body}
-          </li>
-        ))}
-      </ol>
-      {report.responses.length === 0 && <p className="mt-2 text-sm text-ink-3">Belum ada tanggapan.</p>}
-
-      <form action={action} className="mt-5">
-        <input type="hidden" name="code" value={code} />
-        <label className="block">
-          <span className="mb-2 block text-[15px] font-bold">Tambahkan perkembangan</span>
-          <textarea name="update" required maxLength={300} rows={3} className={`${field} py-2.5`} />
-        </label>
-        <p className="mt-1 text-xs text-ink-3">
-          Hanya terlihat oleh kamu, moderator, dan pengelola dapur. Tidak tampil di halaman publik.
-        </p>
-        {updateError && (
-          <p role="alert" className="mt-2 text-sm font-semibold text-alarm">
-            {updateError}
+    <section aria-label="Laporan kamu" className="mt-6">
+      <Card>
+        <CardHeader>
+          <p className="text-sm text-muted-foreground">
+            {report.kind === "health" ? "Keluhan kesehatan" : "Penilaian menu"} · {report.schoolName}
           </p>
-        )}
-        <button type="submit" disabled={pending} className={`${primary} mt-3`}>
-          Kirim perkembangan
-        </button>
-      </form>
+          <p className="text-sm text-muted-foreground">Tanggal makan {mealDay(report.consumedOn)}</p>
+          <CardTitle className="mt-2">
+            <Badge variant={report.status === "rejected" ? "destructive" : "secondary"} className="h-auto text-sm">
+              {STATUS[report.status]}
+            </Badge>
+          </CardTitle>
+          {report.status === "rejected" && report.rejectReason && (
+            <p className="text-sm text-muted-foreground">Alasan: {report.rejectReason}</p>
+          )}
+        </CardHeader>
+        <CardContent>
+          <ol className="grid gap-2.5">
+            {report.responses.map((r) => (
+              <li key={r.id} className="rounded-lg bg-muted px-3.5 py-2.5 text-sm">
+                <b className="block text-xs text-muted-foreground">
+                  {AUTHOR[r.authorKind]}, {when(r.createdAt)}
+                </b>
+                {r.body}
+              </li>
+            ))}
+          </ol>
+          {report.responses.length === 0 && <p className="text-sm text-muted-foreground">Belum ada tanggapan.</p>}
+
+          <form action={action} className="mt-5">
+            <input type="hidden" name="code" value={code} />
+            <Field data-invalid={updateError !== null}>
+              <FieldLabel htmlFor={updateId}>Tambahkan perkembangan</FieldLabel>
+              <Textarea
+                id={updateId}
+                name="update"
+                required
+                maxLength={NOTE_MAX_CHARS}
+                rows={3}
+                aria-invalid={updateError !== null}
+              />
+              <FieldDescription>
+                Hanya terlihat oleh kamu, moderator, dan pengelola dapur. Tidak tampil di halaman publik.
+              </FieldDescription>
+              {updateError && <FieldError>{updateError}</FieldError>}
+            </Field>
+            <Button type="submit" disabled={pending} className="mt-3 h-12 w-full text-base font-bold">
+              Kirim perkembangan
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </section>
   );
 }
