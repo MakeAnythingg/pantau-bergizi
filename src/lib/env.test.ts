@@ -6,6 +6,7 @@ const base = {
   SESSION_SECRET: "a".repeat(32),
   IP_HASH_SECRET: "i".repeat(32),
   CRON_SECRET: "c".repeat(32),
+  PUBLIC_BASE_URL: "https://pantau-bergizi.vercel.app",
 };
 
 test("rejects missing SESSION_SECRET", () => {
@@ -29,6 +30,13 @@ test("DEMO_MODE is true only for the string 'true'", () => {
 
 test("rejects CRON_SECRET shorter than 32 chars", () => {
   expect(() => parseEnv({ ...base, CRON_SECRET: "short" })).toThrow();
+});
+
+test("PUBLIC_BASE_URL needs an http(s) scheme and no trailing slash", () => {
+  expect(() => parseEnv({ ...base, PUBLIC_BASE_URL: undefined })).toThrow();
+  expect(() => parseEnv({ ...base, PUBLIC_BASE_URL: "pantau-bergizi.vercel.app" })).toThrow();
+  expect(() => parseEnv({ ...base, PUBLIC_BASE_URL: "javascript:alert(1)" })).toThrow();
+  expect(() => parseEnv({ ...base, PUBLIC_BASE_URL: "https://pantau-bergizi.vercel.app/" })).toThrow();
 });
 
 test("importing the db and env modules does not require env vars (Vercel build without secrets)", async () => {

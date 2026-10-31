@@ -1,6 +1,8 @@
 import { beforeAll, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
-import { getBoard, getRapor, searchSchools } from "./board";
+import { LEFTOVER_MIN_REPORTS } from "@/lib/thresholds";
+import { formUrl } from "@/lib/form-url";
+import { getBoard, getRapor, getSchoolPage, menuDays, searchSchools } from "./board";
 import { report, school } from "./schema";
 import { seed } from "./seed";
 import { getTestDb, truncateAll } from "./test-db";
@@ -93,4 +95,81 @@ test("reports about meals eaten long ago don't drive today's status", async () =
   );
   expect((await getBoard(db, now)).at(-1)?.signal.status).toBe("no_data");
   expect((await getRapor(db, dahlia?.id ?? 0, now))?.signal.status).toBe("no_data");
+});
+
+const today = "2026-10-30";
+
+const answers = (consumedOn: string, n: number, lots: number) =>
+  Array.from({ length: n }, (_, i) => ({
+    consumedOn,
+    rating: 4,
+    leftover: i < lots ? ("lots" as const) : ("none" as const),
+  }));
+
+test("a day under the leftover minimum shows no share but keeps its rating and count", () => {
+  const { days, mostLeftover } = menuDays(answers(today, LEFTOVER_MIN_REPORTS - 1, 5), [], today);
+  expect(days).toHaveLength(7);
+  expect(days[0]).toMatchObject({
+    day: today,
+    menu: null,
+    rating: 4,
+    rated: LEFTOVER_MIN_REPORTS - 1,
+    leftoverLots: null,
+  });
+  expect(mostLeftover).toBeNull();
+});
+
+test("Sisa tertinggi is the highest qualifying day, the most recent on ties", () => {
+  const rows = [
+    ...answers("2026-10-30", LEFTOVER_MIN_REPORTS, 2),
+    ...answers("2026-10-29", LEFTOVER_MIN_REPORTS, 6),
+    ...answers("2026-10-27", LEFTOVER_MIN_REPORTS, 6),
+    ...answers("2026-10-28", LEFTOVER_MIN_REPORTS - 1, 9),
+  ];
+
+  const { mostLeftover } = menuDays(rows, [{ servedOn: "2026-10-29", name: "Ayam goreng" }], today);
+  expect(mostLeftover).toEqual({ day: "2026-10-29", menu: "Ayam goreng", leftoverLots: 0.6 });
+});
+
+test("rapor groups the per-menu table by meal date, not by when the report arrived", async () => {
+  const db = await getTestDb();
+  const dahlia = (await getBoard(db, now)).find((k) => k.name === "SPPG Dahlia 03");
+
+  const [first] = await db
+    .select()
+    .from(school)
+    .where(eq(school.sppgId, dahlia?.id ?? 0));
+
+  if (!first) throw new Error("Dahlia needs a school");
+  await db.insert(report).values({
+    schoolId: first.id,
+    reporterRole: "student",
+    kind: "experience",
+    consumedOn: "2026-10-29",
+    receivedAt: new Date(now.getTime() - 3_600_000),
+    rating: 2,
+    leftover: "lots",
+    locationCheck: "inside",
+    tokenHash: "late-rating",
+    deviceHash: "late-rating",
+    ipHash: "late",
+  });
+  const days = (await getRapor(db, dahlia?.id ?? 0, now))?.perMenu.days;
+  expect(days?.[0]).toMatchObject({ day: "2026-10-30", rated: 0, rating: null });
+  expect(days?.[1]).toMatchObject({ day: "2026-10-29", rated: 1, rating: 2 });
+});
+
+test("school page has its kitchen's status from the Beranda rule; unknown code → null", async () => {
+  const db = await getTestDb();
+  const page = await getSchoolPage(db, "sdn-harapan-1", now);
+  expect(page).toMatchObject({ name: "SDN Harapan 1", sppgName: "SPPG Melati 01" });
+  expect(page?.signal.status).toBe("priority");
+  expect(await getSchoolPage(db, "tidak-ada", now)).toBeNull();
+});
+
+test("the form URL comes from PUBLIC_BASE_URL", () => {
+  expect(formUrl("sdn-harapan-1")).toBe(`${process.env.PUBLIC_BASE_URL}/lapor/sdn-harapan-1`);
+  expect(formUrl("sdn harapan", "https://pantau-bergizi.vercel.app")).toBe(
+    "https://pantau-bergizi.vercel.app/lapor/sdn%20harapan",
+  );
 });

@@ -7,6 +7,7 @@ import { getDb } from "@/db/index";
 import { addDays, formatDayWIB, formatTimeWIB, formatWeekdayWIB, todayWIB } from "@/lib/date";
 import { requestNow } from "@/lib/now";
 import { STATUS_LABEL, type Status } from "@/lib/status";
+import { LEFTOVER_MIN_REPORTS } from "@/lib/thresholds";
 import { cn } from "@/lib/utils";
 
 const RADAR_MBG_URL = "https://www.bgn.go.id/radar-mbg/";
@@ -82,7 +83,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
   const rapor = await getRapor(getDb(), Number(id), now);
 
   if (!rapor) notFound();
-  const { kitchen, signal, schools, menu, experience, trend, latest } = rapor;
+  const { kitchen, signal, schools, menu, experience, perMenu, trend, latest } = rapor;
   const reported = schools.filter((s) => s.reported).length;
 
   return (
@@ -203,6 +204,8 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
         </Cell>
       </div>
 
+      <PerMenu perMenu={perMenu} />
+
       <h2 className="mt-9 font-heading text-[26px] leading-tight font-bold tracking-tight">Laporan terbaru</h2>
       <p className="text-sm text-ink-3">Catatan pelapor tampil setelah ditinjau moderator.</p>
       <div className="mt-3.5 rounded-[20px] bg-white px-6 py-1 shadow-[0_0_0_1px_rgb(24_36_44/0.05),0_6px_18px_-12px_rgb(24_36_44/0.35)]">
@@ -217,6 +220,67 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
         )}
       </div>
     </>
+  );
+}
+
+const shortDay = (day: string) =>
+  new Date(`${day}T12:00:00+07:00`).toLocaleDateString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+
+const percent = (share: number) => `${Math.round(share * 100)}%`;
+
+function PerMenu({ perMenu: { days, mostLeftover } }: { perMenu: Rapor["perMenu"] }) {
+  return (
+    <section aria-labelledby="per-menu" className="mt-9">
+      <h2 id="per-menu" className="font-heading text-[26px] leading-tight font-bold tracking-tight">
+        7 hari terakhir per menu
+      </h2>
+      <p className="text-sm text-ink-3">
+        Menurut tanggal makan. Sisa makanan tampil jika ada minimal {LEFTOVER_MIN_REPORTS} jawaban hari itu.
+      </p>
+      {mostLeftover && (
+        <p className="mt-2 font-semibold">
+          Sisa tertinggi: {mostLeftover.menu ?? "menu belum diisi"}, {shortDay(mostLeftover.day)} ·{" "}
+          {percent(mostLeftover.leftoverLots)} laporan
+        </p>
+      )}
+      <div className="mt-3.5 rounded-[20px] bg-white px-6 py-1 shadow-[0_0_0_1px_rgb(24_36_44/0.05),0_6px_18px_-12px_rgb(24_36_44/0.35)]">
+        <p
+          aria-hidden="true"
+          className="hidden grid-cols-[130px_1fr_170px_150px] gap-x-4 pt-3 pb-1 text-[13px] font-semibold text-ink-3 sm:grid"
+        >
+          <span>Tanggal makan</span>
+          <span>Menu</span>
+          <span>Nilai</span>
+          <span>Sisa banyak</span>
+        </p>
+        <ul className="divide-y divide-well">
+          {days.map((d) => (
+            <li
+              key={d.day}
+              className="grid grid-cols-2 gap-x-4 gap-y-1 py-3 text-sm sm:grid-cols-[130px_1fr_170px_150px] sm:items-center"
+            >
+              <span className="font-semibold whitespace-nowrap">{shortDay(d.day)}</span>
+              <span className={cn("max-sm:text-right", d.menu === null && "text-ink-3")}>
+                {d.menu ?? "menu belum diisi"}
+              </span>
+              <span className="whitespace-nowrap text-ink-2">
+                <span className="sm:sr-only">Nilai </span>
+                {d.rating === null ? "–" : `${decimal(d.rating)} · ${d.rated} laporan`}
+              </span>
+              <span className="whitespace-nowrap text-ink-2 max-sm:text-right">
+                <span className="sm:sr-only">Sisa banyak </span>
+                {d.leftoverLots === null ? "–" : `${percent(d.leftoverLots)} laporan`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 

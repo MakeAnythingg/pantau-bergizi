@@ -24,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${publicSans.variable} ${zillaSlab.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <header>
+        <header className="print:hidden">
           <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 sm:px-8">
             <Link href="/" className="flex items-center gap-2.5 font-heading text-xl font-bold tracking-tight">
               <BrandMark />
@@ -42,7 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </nav>
         </header>
         {children}
-        <footer className="px-4 py-6 text-center text-xs text-ink-3">
+        <footer className="px-4 py-6 text-center text-xs text-ink-3 print:hidden">
           Data dapur, sekolah, dan laporan adalah SIMULASI. Pantau Bergizi adalah platform sipil independen, bukan
           sistem resmi BGN.
         </footer>

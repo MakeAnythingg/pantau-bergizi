@@ -10,6 +10,7 @@ const env = {
   IP_HASH_SECRET: "e2e-iphash-e2e-iphash-e2e-iphash-0000",
   CRON_SECRET: "e2e-cron-e2e-cron-e2e-cron-e2e-cron-00",
   DEMO_MODE: "true",
+  PUBLIC_BASE_URL: `http://localhost:${PORT}`,
 };
 
 export default defineConfig({
