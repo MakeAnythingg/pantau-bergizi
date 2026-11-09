@@ -43,8 +43,8 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   return (
     <>
       <p className="mt-2.5 max-w-[68ch] text-ink-2 sm:text-base">
-        Kota Sukamaju, {formatDayWIB(now)}. Disusun dari laporan siswa, guru, dan orang tua dalam 24 jam terakhir. Dapur
-        yang perlu diperiksa lebih dulu ada di atas.
+        Kota Sukamaju, {formatDayWIB(now)}. Ringkasan laporan 24 jam terakhir dan episode Prioritas yang masih terbuka.
+        Dapur yang perlu diperiksa lebih dulu ada di atas.
       </p>
 
       <div className="mt-6 mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -129,6 +129,9 @@ function KitchenRow({ kitchen: k }: { kitchen: BoardKitchen }) {
             <span className="font-sans text-sm font-medium text-ink-3">{k.district}</span>
           </div>
           <p className="mt-1.5 max-w-[58ch] text-ink-2">{k.signal.reason}</p>
+          {k.overdueHours !== null && (
+            <p className="mt-1.5 text-sm font-bold text-alarm">Dapur belum menjawab · {k.overdueHours} jam</p>
+          )}
         </div>
         <div className="well flex flex-col justify-center gap-2.5">
           <div className="flex items-baseline gap-2">

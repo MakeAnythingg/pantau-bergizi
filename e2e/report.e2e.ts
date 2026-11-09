@@ -53,8 +53,13 @@ test("path B success screen shows where to get help", async ({ page }) => {
   await expect(page.getByText(/Hubungi UKS \/ Puskesmas terdekat\. Keadaan darurat: 119\./)).toBeVisible();
 });
 
-test("the code on /lacak shows the report and accepts an update", async ({ page }) => {
+test("the third complaint opens an episode and its code accepts updates on /lacak", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: /SPPG Flamboyan 01/ })).toContainText("Perlu perhatian");
   const code = await reportSickness(page, "sdn-flamboyan-1");
+
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: /SPPG Flamboyan 01/ })).toContainText("Prioritas");
 
   await page.goto("/lacak");
   await page.getByLabel("Kode lacak").fill(code.toLowerCase());

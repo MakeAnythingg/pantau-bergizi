@@ -19,8 +19,8 @@ test("board lists kitchens by urgency with their seeded status and coverage", as
   const board = await getBoard(await getTestDb(), now);
   expect(board.map((k) => [k.name, k.signal.status])).toEqual([
     ["SPPG Melati 01", "priority"],
-    ["SPPG Kenanga 02", "attention"],
-    ["SPPG Flamboyan 01", "no_signal"],
+    ["SPPG Kenanga 02", "priority"],
+    ["SPPG Flamboyan 01", "attention"],
     ["SPPG Dahlia 03", "no_data"],
   ]);
   expect(board.map((k) => `${k.reported}/${k.total}`)).toEqual(["4/4", "3/3", "5/5", "0/3"]);

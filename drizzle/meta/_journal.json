@@ -36,6 +36,13 @@
       "when": 1793464187036,
       "tag": "0004_report_device_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794230030338,
+      "tag": "0005_prioritas_episodes",
+      "breakpoints": true
     }
   ]
 }

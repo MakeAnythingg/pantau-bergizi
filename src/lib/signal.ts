@@ -1,4 +1,4 @@
-import type { report } from "@/db/schema";
+import type { episode, report } from "@/db/schema";
 import type { Status } from "./status";
 import {
   LOW_RATING_MIN_REPORTS,
@@ -28,6 +28,8 @@ export type SignalReport = Pick<
 
 export type Signal = { status: Status; reason: string; label: string | null };
 
+type EpisodeRule = typeof episode.$inferSelect.rule;
+
 const SYMPTOM_WORD: Record<Report["symptoms"][number], string> = {
   nausea: "mual",
   diarrhea: "diare",
@@ -44,49 +46,81 @@ const attention = (reason: string): Signal => ({ status: "attention", reason, la
 
 const decimal = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 1 });
 
-/** Status of one SPPG from the reports it received inside the signal window (PRD F2). */
-export function computeSignal(all: SignalReport[]): Signal {
-  const reports = all.filter(counts);
-
-  if (reports.length === 0) return { status: "no_data", reason: "Belum ada laporan dalam 24 jam.", label: null };
-
-  const health = reports.filter((r) => r.kind === "health");
-  const healthSchools = new Set(health.map((r) => r.schoolId));
+function healthSummary(health: SignalReport[]) {
+  const schools = new Set(health.map((r) => r.schoolId)).size;
   const inside = health.filter((r) => r.locationCheck === "inside").length;
   const [onlySymptom, ...otherSymptoms] = new Set(health.flatMap((r) => r.symptoms));
   const complaint = `keluhan ${onlySymptom && otherSymptoms.length === 0 ? SYMPTOM_WORD[onlySymptom] : "kesehatan"}`;
 
+  return { schools, inside, complaint };
+}
+
+const isTeacherGroup = (r: SignalReport) =>
+  r.reporterRole === "teacher" && r.subject === "group" && (r.affectedCount ?? 0) >= TEACHER_GROUP_MIN_AFFECTED;
+
+const teacherReason = (r: SignalReport) => `Laporan guru ${r.schoolName}: perkiraan ${r.affectedCount} terdampak`;
+
+export function priorityEvidence<T extends SignalReport>(all: T[], onlyRule?: EpisodeRule) {
+  const health = all.filter((r) => counts(r) && r.kind === "health");
+  const { schools, inside, complaint } = healthSummary(health);
+
   if (
+    onlyRule !== "teacher_group_reviewed" &&
     health.length >= PRIORITY_MIN_HEALTH_REPORTS &&
-    healthSchools.size >= PRIORITY_MIN_SCHOOLS &&
+    schools >= PRIORITY_MIN_SCHOOLS &&
     inside >= PRIORITY_MIN_INSIDE
   ) {
     return {
-      status: "priority",
-      reason: `${health.length} ${complaint} dari ${healthSchools.size} sekolah dalam 24 jam, ${inside} dikirim dari area sekolah.`,
+      rule: "auto_multi_school" as const,
+      reports: health,
+      reason: (period: string) =>
+        `${health.length} ${complaint} dari ${schools} sekolah ${period}, ${inside} dikirim dari area sekolah.`,
       label: "Otomatis, belum ditinjau moderator",
     };
   }
 
-  const groups = health.filter(
-    (r) =>
-      r.reporterRole === "teacher" && r.subject === "group" && (r.affectedCount ?? 0) >= TEACHER_GROUP_MIN_AFFECTED,
-  );
+  const groups = health.filter((r) => isTeacherGroup(r) && REVIEWED.has(r.status));
+  const [group] = groups;
 
-  const group = groups.find((r) => REVIEWED.has(r.status)) ?? groups[0];
-  const groupReason = group && `Laporan guru ${group.schoolName}: perkiraan ${group.affectedCount} terdampak`;
-
-  if (group && REVIEWED.has(group.status)) {
-    return { status: "priority", reason: `${groupReason}.`, label: "Ditinjau moderator" };
+  if (onlyRule !== "auto_multi_school" && group) {
+    return {
+      rule: "teacher_group_reviewed" as const,
+      reports: groups,
+      reason: () => `${teacherReason(group)}.`,
+      label: "Ditinjau moderator",
+    };
   }
 
-  if (group) return attention(`${groupReason}, sedang ditinjau moderator.`);
+  return null;
+}
 
+/** Status of one SPPG from the reports it received inside the signal window (PRD F2). */
+export function computeSignal<T extends SignalReport>(all: T[], eligibleForPriority?: (report: T) => boolean): Signal {
+  const reports = all.filter(counts);
+
+  if (reports.length === 0) return { status: "no_data", reason: "Belum ada laporan dalam 24 jam.", label: null };
+
+  const priority = priorityEvidence(eligibleForPriority ? reports.filter(eligibleForPriority) : reports);
+
+  if (priority) {
+    return { status: "priority", reason: priority.reason("dalam 24 jam"), label: priority.label };
+  }
+
+  const health = reports.filter((r) => r.kind === "health");
+  const group = health.find(isTeacherGroup);
+
+  if (group) {
+    const reason = teacherReason(group);
+
+    return attention(REVIEWED.has(group.status) ? `${reason}.` : `${reason}, sedang ditinjau moderator.`);
+  }
+
+  const { schools: healthSchools, complaint } = healthSummary(health);
   const [onlyHealth] = health;
 
   if (onlyHealth && health.length === 1) return attention(`1 ${complaint} dari ${onlyHealth.schoolName}.`);
 
-  if (health.length > 1) return attention(`${health.length} ${complaint} dari ${healthSchools.size} sekolah.`);
+  if (health.length > 1) return attention(`${health.length} ${complaint} dari ${healthSchools} sekolah.`);
 
   const unsafe = reports.find(
     (r) =>

@@ -2,45 +2,16 @@ import { and, asc, desc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
 import { addDays, todayWIB } from "@/lib/date";
 import { computeSignal, counts } from "@/lib/signal";
 import type { Status } from "@/lib/status";
-import { LEFTOVER_MIN_REPORTS, LEFTOVER_WINDOW_DAYS, SIGNAL_WINDOW_HOURS } from "@/lib/thresholds";
+import { LEFTOVER_MIN_REPORTS, LEFTOVER_WINDOW_DAYS } from "@/lib/thresholds";
+import { getEpisodeHistory, getEpisodeReplies, getOpenEpisodes } from "./episodes";
 import type { Db } from "./index";
 import { menu, report, response, school, sppg } from "./schema";
+import { feedsSignal, reportFields, windowStart } from "./signal-reports";
 
 const RANK: Record<Status, number> = { priority: 0, attention: 1, no_signal: 2, no_data: 3 };
 const TREND_DAYS = 7;
 const MENU_DAYS = 7;
 const LATEST_LIMIT = 8;
-
-const windowStart = (now: Date) => new Date(now.getTime() - SIGNAL_WINDOW_HOURS * 3_600_000);
-
-/** Today's signal uses reports received in the window about a meal from today or yesterday (PRD F2). */
-const feedsSignal = (now: Date) => {
-  const since = windowStart(now);
-  const oldestMeal = addDays(todayWIB(now), -1);
-
-  return (r: Pick<Row, "receivedAt" | "consumedOn">) => r.receivedAt >= since && r.consumedOn >= oldestMeal;
-};
-
-const reportFields = {
-  id: report.id,
-  schoolId: report.schoolId,
-  schoolName: school.name,
-  sppgId: school.sppgId,
-  kind: report.kind,
-  reporterRole: report.reporterRole,
-  consumedOn: report.consumedOn,
-  receivedAt: report.receivedAt,
-  rating: report.rating,
-  leftover: report.leftover,
-  problems: report.problems,
-  symptoms: report.symptoms,
-  subject: report.subject,
-  affectedCount: report.affectedCount,
-  note: report.note,
-  locationCheck: report.locationCheck,
-  status: report.status,
-  duplicateOf: report.duplicateOf,
-};
 
 function reportsSince(db: Db, since: Date, sppgId?: number) {
   return db
@@ -53,6 +24,8 @@ function reportsSince(db: Db, since: Date, sppgId?: number) {
 
 type Row = Awaited<ReturnType<typeof reportsSince>>[number];
 
+const liveSignal = (rows: Row[]) => computeSignal(rows, (r) => r.episodeId === null);
+
 const reportedSchools = (rows: Row[]) =>
   new Set(
     rows
@@ -63,26 +36,38 @@ const reportedSchools = (rows: Row[]) =>
 
 /** Every kitchen with today's status, most urgent first (Beranda). */
 export async function getBoard(db: Db, now: Date) {
-  const [kitchens, schools, rows] = await Promise.all([
+  const [kitchens, schools, rows, episodes] = await Promise.all([
     db.select().from(sppg),
     db.select({ id: school.id, sppgId: school.sppgId }).from(school),
     reportsSince(db, windowStart(now)),
+    getOpenEpisodes(db, now),
   ]);
 
   const inSignal = feedsSignal(now);
+  const byKitchen = new Map(episodes.map((e) => [e.sppgId, e]));
 
   return kitchens
     .map((k) => {
       const own = rows.filter((r) => r.sppgId === k.id && inSignal(r));
+      const open = byKitchen.get(k.id);
 
       return {
         ...k,
-        signal: computeSignal(own),
+        signal: open?.signal ?? liveSignal(own),
+        overdueHours: open?.overdueHours ?? null,
+        firstDetectedAt: open?.firstDetectedAt ?? null,
         reported: reportedSchools(own).size,
         total: schools.filter((s) => s.sppgId === k.id).length,
       };
     })
-    .toSorted((a, b) => RANK[a.signal.status] - RANK[b.signal.status] || a.name.localeCompare(b.name));
+    .toSorted(
+      (a, b) =>
+        RANK[a.signal.status] - RANK[b.signal.status] ||
+        Number(b.overdueHours !== null) - Number(a.overdueHours !== null) ||
+        (a.firstDetectedAt?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+          (b.firstDetectedAt?.getTime() ?? Number.MAX_SAFE_INTEGER) ||
+        a.name.localeCompare(b.name),
+    );
 }
 
 export type BoardKitchen = Awaited<ReturnType<typeof getBoard>>[number];
@@ -112,9 +97,13 @@ export async function getSchoolPage(db: Db, code: string, now: Date) {
     .where(eq(school.code, code));
 
   if (!found) return null;
-  const rows = await reportsSince(db, windowStart(now), found.sppgId);
 
-  return { ...found, signal: computeSignal(rows.filter(feedsSignal(now))) };
+  const [rows, [open]] = await Promise.all([
+    reportsSince(db, windowStart(now), found.sppgId),
+    getOpenEpisodes(db, now, found.sppgId),
+  ]);
+
+  return { ...found, signal: open?.signal ?? liveSignal(rows.filter(feedsSignal(now))) };
 }
 
 type CountedRow = Pick<Row, "consumedOn" | "rating" | "leftover">;
@@ -160,7 +149,7 @@ export async function getRapor(db: Db, sppgId: number, now: Date) {
   const today = todayWIB(now);
   const firstDay = addDays(today, -(Math.max(TREND_DAYS, LEFTOVER_WINDOW_DAYS, MENU_DAYS) - 1));
 
-  const [schools, menus, rows] = await Promise.all([
+  const [schools, menus, rows, [open], episodeHistory] = await Promise.all([
     db.select().from(school).where(eq(school.sppgId, sppgId)).orderBy(asc(school.id)),
     db
       .select()
@@ -169,6 +158,8 @@ export async function getRapor(db: Db, sppgId: number, now: Date) {
         and(eq(menu.sppgId, sppgId), gte(menu.servedOn, addDays(today, 1 - MENU_DAYS)), lte(menu.servedOn, today)),
       ),
     reportsSince(db, new Date(`${firstDay}T00:00:00+07:00`), sppgId),
+    getOpenEpisodes(db, now, sppgId),
+    getEpisodeHistory(db, sppgId),
   ]);
 
   const todayMenu = menus.find((m) => m.servedOn === today);
@@ -224,7 +215,9 @@ export async function getRapor(db: Db, sppgId: number, now: Date) {
 
   return {
     kitchen,
-    signal: computeSignal(inWindow),
+    signal: open?.signal ?? liveSignal(inWindow),
+    openEpisode: open ? { ...open, replies: await getEpisodeReplies(db, open.id) } : null,
+    episodeHistory,
     schools: schools.map((s) => ({ ...s, reported: reported.has(s.id) })),
     menu: todayMenu ?? null,
     experience,

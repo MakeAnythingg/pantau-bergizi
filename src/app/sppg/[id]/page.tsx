@@ -4,6 +4,7 @@ import { type ReactNode, Suspense } from "react";
 import { STATUS_FILL } from "@/components/tray";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getRapor, type Rapor } from "@/db/board";
+import { episodeTime } from "@/db/episodes";
 import { getDb } from "@/db/index";
 import { addDays, formatDayWIB, formatTimeWIB, formatWeekdayWIB, todayWIB } from "@/lib/date";
 import { requestNow } from "@/lib/now";
@@ -84,7 +85,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
   const rapor = await getRapor(getDb(), Number(id), now);
 
   if (!rapor) notFound();
-  const { kitchen, signal, schools, menu, experience, perMenu, trend, latest } = rapor;
+  const { kitchen, signal, schools, menu, experience, perMenu, trend, latest, openEpisode, episodeHistory } = rapor;
   const reported = schools.filter((s) => s.reported).length;
 
   return (
@@ -129,6 +130,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
               </dd>
             </div>
           </dl>
+          {openEpisode && <OpenEpisode episode={openEpisode} />}
         </section>
 
         <Cell title="Menu hari ini, dilaporkan pengelola" className="lg:col-span-3">
@@ -207,6 +209,8 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
 
       <PerMenu perMenu={perMenu} />
 
+      <EpisodeHistory episodes={episodeHistory} />
+
       <h2 className="mt-9 font-heading text-[26px] leading-tight font-bold tracking-tight">Laporan terbaru</h2>
       <p className="text-sm text-ink-3">Catatan pelapor tampil setelah ditinjau moderator.</p>
       <div className="mt-3.5 rounded-[20px] bg-white px-6 py-1 shadow-[0_0_0_1px_rgb(24_36_44/0.05),0_6px_18px_-12px_rgb(24_36_44/0.35)]">
@@ -233,6 +237,75 @@ const shortDay = (day: string) =>
   });
 
 const percent = (share: number) => `${Math.round(share * 100)}%`;
+
+type OpenEpisode = NonNullable<Rapor["openEpisode"]>;
+
+const FORWARDING: Record<OpenEpisode["forwarding"], string> = {
+  none: "Belum diteruskan",
+  simulated_puskesmas: "Simulasi penerusan ke Puskesmas Kec. Cempaka",
+  forwarded_by_officer: "Diteruskan oleh petugas",
+};
+
+function OpenEpisode({ episode }: { episode: OpenEpisode }) {
+  return (
+    <div className="border-t border-current/25 pt-4 lg:col-span-2">
+      <h2 className="font-bold">Episode Prioritas</h2>
+      <p className="mt-1 text-sm">{FORWARDING[episode.forwarding]}</p>
+      {episode.forwardingNote && <p className="mt-1 text-sm">{episode.forwardingNote}</p>}
+      {episode.overdueHours !== null && (
+        <p className="mt-2 inline-block rounded-md bg-white px-2 py-1 text-sm font-bold text-alarm">
+          Dapur belum menjawab · {episode.overdueHours} jam
+        </p>
+      )}
+      {episode.replies.length > 0 && (
+        <ul className="mt-3 grid gap-2 text-sm">
+          {episode.replies.map((reply) => (
+            <li key={reply.id} className="rounded-xl bg-white px-3.5 py-2.5 text-ink">
+              <b className="block text-xs text-calm">Tanggapan pengelola · {episodeTime(reply.createdAt)}</b>
+              <p className="mt-1 break-words">{reply.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function responseTime(from: Date, to: Date) {
+  const minutes = Math.max(0, Math.floor((to.getTime() - from.getTime()) / 60_000));
+  const hours = Math.floor(minutes / 60);
+
+  return hours ? `${hours} jam ${minutes % 60} menit` : `${minutes} menit`;
+}
+
+function EpisodeHistory({ episodes }: { episodes: Rapor["episodeHistory"] }) {
+  return (
+    <section className="mt-9" aria-labelledby="episode-history">
+      <h2 id="episode-history" className="font-heading text-[26px] leading-tight font-bold tracking-tight">
+        Riwayat episode
+      </h2>
+      {episodes.length === 0 ? (
+        <p className="mt-2 text-sm text-ink-3">Belum ada episode yang ditutup.</p>
+      ) : (
+        <ul className="mt-3.5 divide-y divide-well rounded-[20px] bg-white px-6 shadow-sm">
+          {episodes.map((episode) => (
+            <li key={episode.id} className="py-4 text-sm">
+              <p className="font-semibold">Terdeteksi {episodeTime(episode.firstDetectedAt)}</p>
+              <p className="text-ink-2">Ditutup {episodeTime(episode.closedAt)}</p>
+              {episode.closedNote && <p className="mt-1 break-words">{episode.closedNote}</p>}
+              <p className="mt-1 text-ink-2">
+                Tanggapan pertama:{" "}
+                {episode.firstResponseAt
+                  ? responseTime(episode.firstDetectedAt, episode.firstResponseAt)
+                  : "tidak dijawab"}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 function PerMenu({ perMenu: { days, mostLeftover } }: { perMenu: Rapor["perMenu"] }) {
   return (
@@ -373,6 +446,11 @@ function ReportRow({ report: r, now }: { report: Latest; now: Date }) {
         </span>
         <span>
           {summary.filter(Boolean).join(", ")}
+          {r.consumedOn < addDays(todayWIB(now), -1) && (
+            <span className="ml-2 inline-block rounded-md bg-well px-2 py-0.5 text-xs text-ink-2">
+              makan {shortDay(r.consumedOn)}
+            </span>
+          )}
           {r.note && REVIEWED.has(r.status) && <q className="mt-1 block text-ink-2">{r.note}</q>}
         </span>
       </div>

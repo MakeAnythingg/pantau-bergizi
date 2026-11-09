@@ -12,8 +12,11 @@ type EveryAction<T extends Record<AuditAction, EventSpec>> = T;
  * What each action records. Adding an action = add it to `audit_action` in the schema (plus migration) and here;
  * forgetting this side is a type error.
  */
+type EpisodeClose = { closedAt: Date | null; closedNote: string | null; closedByUserId: number | null };
+
 type AuditEvents = EveryAction<{
   "demo.reset": { entity: "database"; entityId: null; before: null; after: { seededFor: string } };
+  "episode.closed": { entity: "episode"; entityId: number; before: EpisodeClose; after: EpisodeClose };
 }>;
 
 export type AuditEntry = {

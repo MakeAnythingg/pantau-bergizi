@@ -11,7 +11,9 @@ export function createDb(url: string) {
 
 export type Db = ReturnType<typeof createDb>;
 
-export type DbOrTx = Db | Parameters<Parameters<Db["transaction"]>[0]>[0];
+export type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
+
+export type DbOrTx = Db | Tx;
 
 /** The row from an INSERT … RETURNING of a single value. Postgres always returns it; throws if not. */
 export function one<T>(rows: T[]): T {

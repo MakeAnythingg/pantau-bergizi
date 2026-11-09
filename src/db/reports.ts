@@ -6,7 +6,8 @@ import { locationCheck } from "@/lib/geo";
 import { type KeyedHash, keyedHash } from "@/lib/keyed-hash";
 import { CONSUMED_ON_MAX_BACKDATE_DAYS, NOTE_MAX_CHARS } from "@/lib/thresholds";
 import { newTrackingCode, normalizeTrackingCode } from "@/lib/tracking-code";
-import type { Db } from "./index";
+import { lockKitchen, syncEpisode } from "./episodes";
+import { type Db, one } from "./index";
 import {
   leftoverEnum,
   problemEnum,
@@ -145,23 +146,6 @@ const ONE_SURVEY_INDEX = "report_one_survey_per_device";
 
 /** Stores a new report and returns its tracking code (PRD F1, F8). Never drops a health report silently. */
 export async function submitReport(db: Db, input: ReportInput, ctx: SubmitContext): Promise<SubmitResult> {
-  if (input.kind === "health" && !ctx.confirmRepeat) {
-    const [earlier] = await db
-      .select({ id: report.id })
-      .from(report)
-      .where(
-        and(
-          eq(report.deviceHash, ctx.deviceHash),
-          eq(report.schoolId, ctx.school.id),
-          eq(report.consumedOn, input.consumedOn),
-          eq(report.kind, "health"),
-        ),
-      )
-      .limit(1);
-
-    if (earlier) return { kind: "repeat_health" };
-  }
-
   const code = newTrackingCode();
 
   const answers =
@@ -170,17 +154,47 @@ export async function submitReport(db: Db, input: ReportInput, ctx: SubmitContex
       : { symptoms: input.symptoms, subject: input.subject, affectedCount: input.affectedCount };
 
   try {
-    await db.insert(report).values({
-      schoolId: ctx.school.id,
-      reporterRole: input.reporterRole,
-      kind: input.kind,
-      consumedOn: input.consumedOn,
-      note: input.note,
-      ...answers,
-      locationCheck: locationCheck(ctx.coords, ctx.school),
-      tokenHash: keyedHash(normalizeTrackingCode(code) ?? code),
-      deviceHash: ctx.deviceHash,
-      ipHash: ctx.ipHash,
+    return await db.transaction(async (tx) => {
+      const { sppgId } = one(
+        await tx.select({ sppgId: school.sppgId }).from(school).where(eq(school.id, ctx.school.id)),
+      );
+
+      await lockKitchen(tx, sppgId);
+
+      if (input.kind === "health" && !ctx.confirmRepeat) {
+        const [earlier] = await tx
+          .select({ id: report.id })
+          .from(report)
+          .where(
+            and(
+              eq(report.deviceHash, ctx.deviceHash),
+              eq(report.schoolId, ctx.school.id),
+              eq(report.consumedOn, input.consumedOn),
+              eq(report.kind, "health"),
+            ),
+          )
+          .limit(1);
+
+        if (earlier) return { kind: "repeat_health" };
+      }
+
+      const now = new Date();
+      await tx.insert(report).values({
+        schoolId: ctx.school.id,
+        reporterRole: input.reporterRole,
+        kind: input.kind,
+        consumedOn: input.consumedOn,
+        receivedAt: now,
+        note: input.note,
+        ...answers,
+        locationCheck: locationCheck(ctx.coords, ctx.school),
+        tokenHash: keyedHash(normalizeTrackingCode(code) ?? code),
+        deviceHash: ctx.deviceHash,
+        ipHash: ctx.ipHash,
+      });
+      await syncEpisode(tx, sppgId, now);
+
+      return { kind: "ok", code };
     });
   } catch (error) {
     // The partial unique index is the race-proof "one survey" rule; its violation is an expected answer.
@@ -194,8 +208,6 @@ export async function submitReport(db: Db, input: ReportInput, ctx: SubmitContex
 
     throw error;
   }
-
-  return { kind: "ok", code };
 }
 
 /** The report behind a tracking code with its responses in time order, or null for an unknown code. */

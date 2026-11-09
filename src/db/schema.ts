@@ -36,7 +36,7 @@ export const forwardingEnum = pgEnum("forwarding", ["none", "simulated_puskesmas
 export const userRoleEnum = pgEnum("user_role", ["moderator", "sppg_manager"]);
 
 // One value per kind of staff change; features add theirs (with a migration) as they ship. See src/lib/audit.ts.
-export const auditActionEnum = pgEnum("audit_action", ["demo.reset"]);
+export const auditActionEnum = pgEnum("audit_action", ["demo.reset", "episode.closed"]);
 
 export const sppg = pgTable("sppg", {
   id: id(),
@@ -98,6 +98,7 @@ export const report = pgTable(
     status: reportStatusEnum().notNull().default("received"),
     rejectReason: text(),
     duplicateOf: integer().references((): AnyPgColumn => report.id),
+    episodeId: integer().references(() => episode.id),
     tokenHash: text().notNull().unique(),
     deviceHash: text().notNull(),
     ipHash: text().notNull(),
@@ -105,6 +106,7 @@ export const report = pgTable(
   (t) => [
     index().on(t.schoolId, t.receivedAt),
     index().on(t.status),
+    index().on(t.episodeId),
     // One experience survey per device, school, and meal date (PRD F8). Race-proof; a violation is the
     // "sudah menilai" message. The plain index serves the repeat-health check, which the partial one can't.
     uniqueIndex("report_one_survey_per_device")
@@ -127,11 +129,14 @@ export const episode = pgTable(
     forwarding: forwardingEnum().notNull().default("none"),
     forwardingNote: text(),
     closedAt: timestamp({ withTimezone: true }),
+    closedNote: text(),
+    closedByUserId: integer().references(() => user.id),
   },
   (t) => [
-    index()
+    uniqueIndex("episode_one_open_per_sppg")
       .on(t.sppgId)
       .where(sql`${t.closedAt} IS NULL`),
+    index().on(t.sppgId, t.closedAt),
   ],
 );
 
@@ -160,7 +165,7 @@ export const response = pgTable(
     authorKind: authorKindEnum().notNull(),
     authorUserId: integer().references(() => user.id),
   },
-  (t) => [check("response_one_target", sql`num_nonnulls(${t.reportId}, ${t.episodeId}) = 1`)],
+  (t) => [index().on(t.episodeId), check("response_one_target", sql`num_nonnulls(${t.reportId}, ${t.episodeId}) = 1`)],
 );
 
 // Fixed-window counters for src/lib/rate-limit.ts. Keys never hold a raw IP or email (see keyedHash).
