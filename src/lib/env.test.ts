@@ -42,10 +42,11 @@ test("PUBLIC_BASE_URL needs an http(s) scheme and no trailing slash", () => {
 });
 
 test("importing the db and env modules does not require env vars (Vercel build without secrets)", async () => {
-  const dir = import.meta.dir;
+  const dbUrl = new URL("../db/index.ts", import.meta.url).href;
+  const envUrl = new URL("./env.ts", import.meta.url).href;
+  const imports = `await import(${JSON.stringify(dbUrl)}); await import(${JSON.stringify(envUrl)})`;
 
-  const proc = Bun.spawn(["bun", "-e", `await import("${dir}/../db/index.ts"); await import("${dir}/env.ts")`], {
-    cwd: "/tmp", // no .env here, so Bun loads nothing
+  const proc = Bun.spawn([process.execPath, "--no-env-file", "-e", imports], {
     env: { PATH: process.env.PATH ?? "" },
     stderr: "pipe",
   });

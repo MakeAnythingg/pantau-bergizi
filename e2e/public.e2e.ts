@@ -16,6 +16,7 @@ test("Beranda lists every kitchen, most urgent first, on a phone", async ({ page
   const rows = page.locator("main ol > li");
   await expect(rows).toHaveCount(4);
   await expect(rows.first()).toContainText("Prioritas");
+  await expect(rows.first()).toContainText("Dapur belum menjawab");
   await expectNoHorizontalScroll(page);
 });
 
@@ -25,7 +26,11 @@ test("Rapor dapur opens from Beranda and renders on a phone", async ({ page }) =
 
   await expect(page).toHaveURL(/\/sppg\/\d+$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("SPPG Melati 01");
-  await expect(page.getByRole("region", { name: "Status hari ini" })).toContainText("Prioritas");
+  const status = page.getByRole("region", { name: "Status hari ini" });
+
+  await expect(status).toContainText("Prioritas");
+  await expect(status.getByText(/Dapur belum menjawab/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Riwayat episode" })).toContainText("tindak lanjut sudah dicatat");
   await expectNoHorizontalScroll(page);
 });
 
