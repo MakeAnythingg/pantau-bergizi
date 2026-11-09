@@ -35,3 +35,6 @@ export const formatTimeWIB = (d: Date) => wibClock.format(d);
 
 /** "Jum" */
 export const formatWeekdayWIB = (d: Date) => wibShortDay.format(d);
+
+export const hoursSince = (from: Date, now: Date) =>
+  Math.max(0, Math.floor((now.getTime() - from.getTime()) / 3_600_000));

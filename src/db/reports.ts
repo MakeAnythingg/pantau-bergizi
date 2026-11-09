@@ -6,7 +6,7 @@ import { locationCheck } from "@/lib/geo";
 import { type KeyedHash, keyedHash } from "@/lib/keyed-hash";
 import { CONSUMED_ON_MAX_BACKDATE_DAYS, NOTE_MAX_CHARS } from "@/lib/thresholds";
 import { newTrackingCode, normalizeTrackingCode } from "@/lib/tracking-code";
-import { lockKitchen, syncEpisode } from "./episodes";
+import { getEpisodeReplies, lockKitchen, syncEpisode } from "./episodes";
 import { type Db, one } from "./index";
 import {
   leftoverEnum,
@@ -222,6 +222,8 @@ export async function findReportByCode(db: Db, code: string) {
       kind: report.kind,
       schoolName: school.name,
       consumedOn: report.consumedOn,
+      receivedAt: report.receivedAt,
+      episodeId: report.episodeId,
       status: report.status,
       rejectReason: report.rejectReason,
     })
@@ -231,13 +233,16 @@ export async function findReportByCode(db: Db, code: string) {
 
   if (!found) return null;
 
-  const responses = await db
-    .select({ id: response.id, authorKind: response.authorKind, body: response.body, createdAt: response.createdAt })
-    .from(response)
-    .where(eq(response.reportId, found.id))
-    .orderBy(asc(response.createdAt), asc(response.id));
+  const [responses, episodeReplies] = await Promise.all([
+    db
+      .select({ id: response.id, authorKind: response.authorKind, body: response.body, createdAt: response.createdAt })
+      .from(response)
+      .where(eq(response.reportId, found.id))
+      .orderBy(asc(response.createdAt), asc(response.id)),
+    found.episodeId === null ? [] : getEpisodeReplies(db, found.episodeId),
+  ]);
 
-  return { ...found, responses };
+  return { ...found, responses, episodeReplies };
 }
 
 export type TrackedReport = NonNullable<Awaited<ReturnType<typeof findReportByCode>>>;

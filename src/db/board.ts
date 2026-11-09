@@ -26,6 +26,12 @@ type Row = Awaited<ReturnType<typeof reportsSince>>[number];
 
 const liveSignal = (rows: Row[]) => computeSignal(rows, (r) => r.episodeId === null);
 
+export async function getKitchenSignal(db: Db, sppgId: number, now: Date) {
+  const rows = await reportsSince(db, windowStart(now), sppgId);
+
+  return liveSignal(rows.filter(feedsSignal(now)));
+}
+
 const reportedSchools = (rows: Row[]) =>
   new Set(
     rows

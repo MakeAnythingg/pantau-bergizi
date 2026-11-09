@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getRapor, type Rapor } from "@/db/board";
 import { episodeTime } from "@/db/episodes";
 import { getDb } from "@/db/index";
-import { addDays, formatDayWIB, formatTimeWIB, formatWeekdayWIB, todayWIB } from "@/lib/date";
+import { addDays, formatDayWIB, formatTimeWIB, formatWeekdayWIB, hoursSince, todayWIB } from "@/lib/date";
 import { requestNow } from "@/lib/now";
 import { STATUS_LABEL, type Status } from "@/lib/status";
 import { LEFTOVER_MIN_REPORTS } from "@/lib/thresholds";
@@ -64,8 +64,6 @@ function whenWIB(d: Date, now: Date) {
 
   return `${label} ${formatTimeWIB(d)}`;
 }
-
-const hoursSince = (from: Date, now: Date) => Math.max(0, Math.floor((now.getTime() - from.getTime()) / 3_600_000));
 
 export default function RaporDapurPage({ params }: PageProps<"/sppg/[id]">) {
   return (

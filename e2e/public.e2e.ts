@@ -20,7 +20,7 @@ test("Beranda lists every kitchen, most urgent first, on a phone", async ({ page
   await expectNoHorizontalScroll(page);
 });
 
-test("Rapor dapur opens from Beranda and renders on a phone", async ({ page }) => {
+test("Rapor renders on a phone and its overdue label clears when Melati replies", async ({ page }) => {
   await page.goto("/");
   await page.locator("main ol > li a").first().click();
 
@@ -32,6 +32,23 @@ test("Rapor dapur opens from Beranda and renders on a phone", async ({ page }) =
   await expect(status.getByText(/Dapur belum menjawab/)).toBeVisible();
   await expect(page.getByRole("region", { name: "Riwayat episode" })).toContainText("tindak lanjut sudah dicatat");
   await expectNoHorizontalScroll(page);
+
+  const raporUrl = page.url();
+  await page.goto("/masuk");
+  await page.getByLabel("Email").fill("sppg-melati@pantaubergizi.id");
+  await page.getByLabel("Kata sandi").fill("demo1234");
+  await page.getByRole("button", { name: "Masuk" }).click();
+  await expect(page).toHaveURL(/\/dasbor$/);
+  await expectNoHorizontalScroll(page);
+  await page.getByLabel("Tanggapan episode").fill("Dapur menindaklanjuti laporan bersama sekolah.");
+  await page.getByRole("button", { name: "Kirim tanggapan episode" }).click();
+  await expect(page.getByRole("region", { name: "Status dapur" })).toContainText(
+    "Dapur menindaklanjuti laporan bersama sekolah.",
+  );
+
+  await page.goto(raporUrl);
+  await expect(status.getByText(/Dapur belum menjawab/)).toHaveCount(0);
+  await expect(status).toContainText("Dapur menindaklanjuti laporan bersama sekolah.");
 });
 
 test("every response carries the security headers", async ({ request }) => {

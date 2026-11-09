@@ -1,5 +1,5 @@
 import type { DbOrTx } from "@/db";
-import { auditLog } from "@/db/schema";
+import { auditLog, type episode, type report } from "@/db/schema";
 
 type AuditAction = (typeof auditLog.$inferInsert)["action"];
 
@@ -14,9 +14,30 @@ type EveryAction<T extends Record<AuditAction, EventSpec>> = T;
  */
 type EpisodeClose = { closedAt: Date | null; closedNote: string | null; closedByUserId: number | null };
 
+type ReportStatus = Pick<typeof report.$inferSelect, "status" | "rejectReason">;
+
+type Forwarding = Pick<typeof episode.$inferSelect, "forwarding" | "forwardingNote">;
+
+type MenuContent = { name: string; composition: string };
+
 type AuditEvents = EveryAction<{
   "demo.reset": { entity: "database"; entityId: null; before: null; after: { seededFor: string } };
   "episode.closed": { entity: "episode"; entityId: number; before: EpisodeClose; after: EpisodeClose };
+  "episode.forwarding_changed": { entity: "episode"; entityId: number; before: Forwarding; after: Forwarding };
+  "report.status_changed": { entity: "report"; entityId: number; before: ReportStatus; after: ReportStatus };
+  "report.merged": {
+    entity: "report";
+    entityId: number;
+    before: { duplicateOf: null };
+    after: { duplicateOf: number };
+  };
+  "response.created": {
+    entity: "response";
+    entityId: number;
+    before: null;
+    after: { reportId: number | null; episodeId: number | null };
+  };
+  "menu.updated": { entity: "menu"; entityId: number; before: MenuContent | null; after: MenuContent };
 }>;
 
 export type AuditEntry = {

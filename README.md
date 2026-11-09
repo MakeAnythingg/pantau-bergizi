@@ -83,7 +83,7 @@ bun run db:migrate && bun run db:reset --yes && bun run build && bun start
 - [x] Halaman sekolah: QR cetak A4, bagikan ke WhatsApp, tabel rapor per menu
 - [x] Form lapor dua jalur via QR + kode lacak (`/lacak`), Turnstile, batas per perangkat dan per IP
 - [ ] Aturan sinyal + episode Prioritas
-- [ ] Dasbor moderator dan pengelola SPPG
+- [x] Dasbor moderator dan pengelola SPPG
 - [ ] Halaman Data nasional dan Metode
 
 Spesifikasi produk lengkap: [`PRD_Pantau_Bergizi_V2_1.md`](PRD_Pantau_Bergizi_V2_1.md).
