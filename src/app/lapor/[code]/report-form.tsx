@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { type ReactNode, type SubmitEvent, startTransition, useActionState, useId, useState } from "react";
 import { id as idLocale } from "react-day-picker/locale";
+import { LACAK_HANDOFF_KEY } from "@/app/lacak/lacak-view";
 import { Turnstile } from "@/components/turnstile";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -503,8 +504,18 @@ function Success({ kind, code }: { kind: Path; code: string }) {
           </AlertDescription>
         </Alert>
       )}
-      <Link href="/lacak" className={cn(buttonVariants(), "mt-5 h-12 w-full text-base font-bold")}>
-        Lacak laporan
+      <Link
+        href="/lacak"
+        onClick={() => {
+          try {
+            sessionStorage.setItem(LACAK_HANDOFF_KEY, code);
+          } catch {
+            // Storage blocked: /lacak asks for the code as usual.
+          }
+        }}
+        className={cn(buttonVariants(), "mt-5 h-12 w-full text-base font-bold")}
+      >
+        Lihat status laporan
       </Link>
     </section>
   );

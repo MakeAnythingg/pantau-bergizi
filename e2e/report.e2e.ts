@@ -27,11 +27,15 @@ async function reportSickness(page: Page, school: string): Promise<string> {
   return (await code.textContent()) ?? "";
 }
 
-test("path A on a phone with location denied ends on a tracking code", async ({ page }) => {
+test("path A on a phone with location denied ends on a tracking code that opens its status", async ({ page }) => {
   await rateMeal(page, "sdn-cempaka-3");
 
   await expect(page.getByRole("heading", { name: "Terima kasih, laporan terkirim" })).toBeVisible();
   await expect(page.getByTestId("tracking-code")).toHaveText(CODE);
+
+  await page.getByRole("link", { name: "Lihat status laporan" }).click();
+  await expect(page.getByRole("region", { name: "Laporan kamu" })).toContainText("Laporanmu sudah masuk");
+  await expect(page).toHaveURL(/\/lacak$/); // handed over without the code reaching the URL
 });
 
 test.describe("with location allowed", () => {
@@ -66,13 +70,13 @@ test("the third complaint opens an episode and its code accepts updates on /laca
   await page.getByRole("button", { name: "Lacak" }).click();
 
   const thread = page.getByRole("region", { name: "Laporan kamu" });
-  await expect(thread).toContainText("Keluhan kesehatan · SDN Flamboyan 1");
+  await expect(thread.getByRole("definition")).toContainText(["Keluhan kesehatan", "SDN Flamboyan 1"]);
   await expect(page).toHaveURL(/\/lacak$/); // the code never reaches the URL
 
+  await thread.getByRole("button", { name: "Tambah kabar" }).click();
   await thread.getByLabel("Tambahkan perkembangan").fill("Anak saya sudah membaik.");
   await thread.getByRole("button", { name: "Kirim perkembangan" }).click();
-  await expect(thread.getByRole("listitem")).toContainText(["Perkembangan dari kamu"]);
-  await expect(thread).toContainText("Anak saya sudah membaik.");
+  await expect(thread.getByRole("listitem").filter({ hasText: "Anak saya sudah membaik." })).toContainText("Kamu ·");
 });
 
 test("a second survey from the same browser for the same school and date is refused", async ({ page }) => {

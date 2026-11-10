@@ -221,6 +221,8 @@ export async function findReportByCode(db: Db, code: string) {
       id: report.id,
       kind: report.kind,
       schoolName: school.name,
+      kitchenId: sppg.id,
+      kitchenName: sppg.name,
       consumedOn: report.consumedOn,
       receivedAt: report.receivedAt,
       episodeId: report.episodeId,
@@ -229,6 +231,7 @@ export async function findReportByCode(db: Db, code: string) {
     })
     .from(report)
     .innerJoin(school, eq(report.schoolId, school.id))
+    .innerJoin(sppg, eq(school.sppgId, sppg.id))
     .where(eq(report.tokenHash, keyedHash(normalized)));
 
   if (!found) return null;
