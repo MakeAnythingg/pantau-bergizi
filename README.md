@@ -84,6 +84,6 @@ bun run db:migrate && bun run db:reset --yes && bun run build && bun start
 - [x] Form lapor dua jalur via QR + kode lacak (`/lacak`), Turnstile, batas per perangkat dan per IP
 - [ ] Aturan sinyal + episode Prioritas
 - [x] Dasbor moderator dan pengelola SPPG
-- [ ] Halaman Data nasional dan Metode
+- [x] Halaman Data nasional dan Metode
 
 Spesifikasi produk lengkap: [`PRD_Pantau_Bergizi_V2_1.md`](PRD_Pantau_Bergizi_V2_1.md).

@@ -6,7 +6,7 @@
 **Subtema pendamping:** Public Service Tracking. Data-Driven Decision Support dan Open Government Data hanya berperan sebagai pendukung.
 **Pitch satu kalimat:** Radar MBG menampilkan menu dari dapur, sedangkan Pantau Bergizi menampilkan pengalaman penerimanya: rapor harian per dapur, bukan kotak aduan.
 
-> **Klasifikasi data:** Semua dapur, sekolah, laporan, dan menu di "Kota Sukamaju" adalah **SIMULASI**. Angka nasional di halaman Data dikutip dari pemberitaan, lengkap dengan sumber dan tanggalnya. Pantau Bergizi adalah platform sipil independen, bukan sistem resmi BGN. Produk ini tidak mendiagnosis dan tidak menjanjikan pencegahan keracunan. Fungsinya membantu menentukan dapur mana yang perlu diperiksa lebih dulu.
+> **Klasifikasi data:** Semua dapur, sekolah, laporan, dan menu di "Kota Sukamaju" adalah **SIMULASI**. Angka di halaman Data berasal dari publikasi dan penelitian yang dicantumkan lengkap dengan sumber dan tanggalnya. Pantau Bergizi adalah platform sipil independen, bukan sistem resmi BGN. Produk ini tidak mendiagnosis dan tidak menjanjikan pencegahan keracunan. Fungsinya membantu menentukan dapur mana yang perlu diperiksa lebih dulu.
 
 ### Perubahan dari V2
 
@@ -38,8 +38,8 @@ Yang **tidak** diambil dari V3.1/V4:
 
 ### 1.1 Masalah
 
-- **Insiden keamanan pangan MBG terjadi berulang.** Pada Januari–September 2025 tercatat **6.457 korban**, 4.147 di antaranya di Jawa ([Metro TV, rapat BGN–Komisi IX, 1 Okt 2025](https://www.metrotvnews.com/read/bVDCjdx9-januari-september-2025-jumlah-korban-insiden-mbg-capai-6-457-orang)).
-- **Skala program sangat besar.** Ada **27.485 dapur**, dengan anggaran 2026 sebesar Rp229 triliun ([Katadata, mengutip BGN, 28 Agu 2026](https://katadata.co.id/finansial/makro/6a91270f7abf5/bgn-anggaran-mbg-sudah-dipakai-rp-177-triliun-hingga-27-agustus-2026)).
+- **Insiden keamanan pangan MBG terjadi berulang.** Dalam rapat Komisi IX, Wakil Ketua Komisi IX menyebut **50.059 korban** insiden keracunan terkait MBG per 2 September 2026 ([Parlementaria DPR RI, 4 Sep 2026](https://www.dpr.go.id/kegiatan-dpr/berita/Desak-Perubahan-Sistemik-BGN-Harus-Beralih-ke-Dapur-Berbasis-Sekolah-68757)).
+- **Skala program sangat besar.** BGN mencatat **27.485 dapur** hingga akhir Oktober 2026, dengan 26.723 di antaranya telah diverifikasi ([BGN, 2 Nov 2026](https://www.bgn.go.id/news/artikel/ketika-mbg-tumbuh-besar-bgn-mulai-membenahi-dapur-hingga-tata-kelola)). Pagu tersedia untuk penyaluran MBG pada tahun anggaran 2026 sebesar **Rp218,77 triliun** per 16 September 2026 ([BGN, 17 Sep 2026](https://www.bgn.go.id/news/siaran-pers/program-mbg-serap-anggaran-6389-persen-per-september-2026)).
 - **Yang sudah publik adalah apa yang dikirim dapur.** [Radar MBG](https://www.bgn.go.id/radar-mbg/), portal resmi BGN, menampilkan menu, gizi, foto, dan SPPG penyedia per sekolah. Yang **belum** kami temukan di ruang publik adalah apa yang dialami penerimanya: apakah makanannya habis, apakah ada yang mual, dan bagaimana pola itu terlihat per dapur.
 - **Keluhan tidak pernah terbaca sebagai pola.** Keluhan berhenti di grup WhatsApp atau tersebar sebagai kasus tunggal. Tidak ada yang membaca polanya, misalnya dua sekolah yang dilayani dapur yang sama sama-sama melapor mual pada hari yang sama.
 - **Gizi yang tidak dimakan tidak pernah sampai ke anak.** Studi di SMPN 4 Garut mencatat sisa makanan sebesar **35,8% porsi** ([IPB, 2026](https://repository.ipb.ac.id/handle/123456789/177115)), tetapi tidak ada yang memantaunya secara publik.
@@ -240,7 +240,7 @@ flowchart TD
 
 ### F9. Data nasional dan Metode
 
-- **Data nasional** (`/data`): anggaran, jumlah dapur, dan korban insiden. Setiap angka menyertakan sumber dan tanggalnya.
+- **Data nasional** (`/data`): anggaran, jumlah dapur, korban insiden, dan studi sisa makanan di SMPN 4 Garut. Setiap angka menyertakan periode, sumber, tanggal terbit, dan tanggal akses.
 - **Metode** (`/metode`) berisi:
   - aturan sinyal dalam bahasa awam
   - definisi tiap label
