@@ -6,7 +6,7 @@ Karya untuk **Web In Action — Multimedia In Action (MIA) 2026**. Subtema utama
 
 **Demo langsung:** https://pantau-bergizi.vercel.app
 
-**First Draft MIA 2026:** [snapshot kode dan README pada tag `first-draft`](https://github.com/MakeAnythingg/pantau-bergizi/tree/first-draft). [Checklist pengumpulan dan verifikasi Final](https://github.com/MakeAnythingg/pantau-bergizi/issues/9).
+**First Draft MIA 2026:** [snapshot kode dan README pada tag `first-draft`](https://github.com/MakeAnythingg/pantau-bergizi/tree/first-draft). [Checklist verifikasi Final](docs/final-verification.md).
 
 > **Data simulasi.** Semua dapur, sekolah, laporan, dan menu di "Kota Sukamaju" adalah SIMULASI. Pantau Bergizi adalah platform sipil independen, bukan sistem resmi BGN.
 
@@ -109,7 +109,7 @@ Kelima alur memenuhi target pada ketiga sampel. Semua statement pada sampel pert
 - [x] Fondasi repo: Next.js 16, Tailwind, shadcn/ui, Bun
 - [x] Database PostgreSQL (7 tabel produk + rate_limit + audit_log) + migrasi + data simulasi Kota Sukamaju
 - [x] Login petugas (moderator dan pengelola SPPG) dengan pemeriksaan peran di server
-- [x] Semua halaman sesuai sitemap (masih kerangka)
+- [x] Semua halaman sesuai sitemap
 - [x] Penambahan data simulasi harian
 - [x] Beranda: papan status dapur hari ini
 - [x] Rapor dapur: status, alasan, cakupan, tren 7 hari, sisa makanan, menu
@@ -122,5 +122,7 @@ Kelima alur memenuhi target pada ketiga sampel. Semua statement pada sampel pert
 - [x] Dasbor moderator dan pengelola SPPG
 - [x] Halaman Data nasional dan Metode
 - [x] Bukti skala nasional untuk lima alur kueri
+- [ ] Persetujuan Praffi untuk teks Indonesia di Data Nasional dan Metode ([#7](https://github.com/MakeAnythingg/pantau-bergizi/issues/7))
+- [ ] Pengumpulan lomba dan verifikasi Final di deployment ([#9](https://github.com/MakeAnythingg/pantau-bergizi/issues/9))
 
 Spesifikasi produk lengkap: [`PRD_Pantau_Bergizi_V2_1.md`](PRD_Pantau_Bergizi_V2_1.md).
