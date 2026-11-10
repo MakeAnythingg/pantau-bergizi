@@ -149,13 +149,13 @@ async function seedComplaints(tx: Tx, schools: SimSchool[], fixture: string, at:
 }
 
 /** Truncate + seed + audit row in one transaction, so a failed reset leaves the previous data in place. */
-export async function resetDb(db: Db, now: Date = new Date()): Promise<void> {
+export async function resetDb(db: Db, now: Date = new Date(), actorUserId: number | null = null): Promise<void> {
   await db.transaction(async (tx) => {
     await truncateAll(tx);
     await seedDemo(tx, now);
     await audit(tx, {
       action: "demo.reset",
-      actorUserId: null,
+      actorUserId,
       entity: "database",
       entityId: null,
       before: null,

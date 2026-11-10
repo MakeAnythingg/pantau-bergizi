@@ -82,7 +82,7 @@ export function LacakView() {
 }
 
 function Thread({
-  state: { code, report, updateError },
+  state: { code, report, waitingHours, updateError },
   action,
   pending,
 }: {
@@ -110,6 +110,9 @@ function Thread({
           {report.status === "rejected" && report.rejectReason && (
             <p className="text-sm text-muted-foreground">Alasan: {report.rejectReason}</p>
           )}
+          {waitingHours !== null && (
+            <p className="text-sm font-bold text-alarm">Belum ditanggapi · {waitingHours} jam</p>
+          )}
         </CardHeader>
         <CardContent>
           <ol className="grid gap-2.5">
@@ -122,7 +125,22 @@ function Thread({
               </li>
             ))}
           </ol>
-          {report.responses.length === 0 && <p className="text-sm text-muted-foreground">Belum ada tanggapan.</p>}
+          {report.responses.length === 0 && report.episodeReplies.length === 0 && (
+            <p className="text-sm text-muted-foreground">Belum ada tanggapan.</p>
+          )}
+          {report.episodeReplies.length > 0 && (
+            <section className="mt-4 space-y-2" aria-label="Tanggapan pengelola untuk episode ini">
+              <h3 className="text-sm font-semibold">Tanggapan pengelola untuk episode ini</h3>
+              <ol className="grid gap-2.5">
+                {report.episodeReplies.map((reply) => (
+                  <li key={reply.id} className="rounded-lg bg-muted px-3.5 py-2.5 text-sm">
+                    <p className="text-xs font-semibold text-muted-foreground">{when(reply.createdAt)}</p>
+                    <p className="break-words whitespace-pre-wrap">{reply.body}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
           <form action={action} {...formProps} className="mt-5">
             <input type="hidden" name="code" value={code} />

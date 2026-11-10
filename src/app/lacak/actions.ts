@@ -4,13 +4,14 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { addReporterUpdate, findReportByCode, NOTE_TOO_LONG, type TrackedReport } from "@/db/reports";
 import { clientIpHash } from "@/lib/client-ip";
+import { hoursSince } from "@/lib/date";
 import { allowHit } from "@/lib/rate-limit";
 import { LACAK_IP_LIMIT, NOTE_MAX_CHARS } from "@/lib/thresholds";
 
 export type LacakState =
   | { status: "idle" }
   | { status: "error"; message: string }
-  | { status: "found"; code: string; report: TrackedReport; updateError: string | null };
+  | { status: "found"; code: string; report: TrackedReport; waitingHours: number | null; updateError: string | null };
 
 const NOT_FOUND: LacakState = { status: "error", message: "Kode tidak ditemukan." };
 const THROTTLED: LacakState = { status: "error", message: "Terlalu banyak percobaan, coba lagi beberapa menit lagi." };
@@ -36,5 +37,10 @@ export async function lacakAction(_prev: LacakState, form: FormData): Promise<La
   if (!report) return NOT_FOUND;
 
   // A rejected update keeps the thread on screen, with the reason next to the textarea.
-  return { status: "found", code, report, updateError: body?.error?.issues[0]?.message ?? null };
+  const waitingHours =
+    report.status === "reviewed" && !report.responses.some((reply) => reply.authorKind === "sppg")
+      ? hoursSince(report.receivedAt, new Date())
+      : null;
+
+  return { status: "found", code, report, waitingHours, updateError: body?.error?.issues[0]?.message ?? null };
 }

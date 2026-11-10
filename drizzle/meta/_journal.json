@@ -43,6 +43,13 @@
       "when": 1794230030338,
       "tag": "0005_prioritas_episodes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794245330136,
+      "tag": "0006_staff_dashboards",
+      "breakpoints": true
     }
   ]
 }

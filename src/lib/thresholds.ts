@@ -30,6 +30,10 @@ export const CONSUMED_ON_MAX_BACKDATE_DAYS = 30;
 
 export const NOTE_MAX_CHARS = 300;
 
+/** Suspicious IP surge: at least this many reports within a sliding window. */
+export const SURGE_MIN_REPORTS = 6;
+export const SURGE_WINDOW_MINUTES = 5;
+
 /** Per-IP flood limits. High enough that a whole class on one school wifi can report (PRD F8: IP never blocks a class). */
 export const REPORT_IP_LIMIT = { limit: 120, windowSeconds: 10 * 60 };
 export const LACAK_IP_LIMIT = { limit: 30, windowSeconds: 10 * 60 };

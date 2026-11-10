@@ -36,7 +36,15 @@ export const forwardingEnum = pgEnum("forwarding", ["none", "simulated_puskesmas
 export const userRoleEnum = pgEnum("user_role", ["moderator", "sppg_manager"]);
 
 // One value per kind of staff change; features add theirs (with a migration) as they ship. See src/lib/audit.ts.
-export const auditActionEnum = pgEnum("audit_action", ["demo.reset", "episode.closed"]);
+export const auditActionEnum = pgEnum("audit_action", [
+  "demo.reset",
+  "episode.closed",
+  "report.status_changed",
+  "report.merged",
+  "response.created",
+  "menu.updated",
+  "episode.forwarding_changed",
+]);
 
 export const sppg = pgTable("sppg", {
   id: id(),
@@ -107,6 +115,10 @@ export const report = pgTable(
     index().on(t.schoolId, t.receivedAt),
     index().on(t.status),
     index().on(t.episodeId),
+    index("report_review_queue_idx")
+      .on(t.receivedAt)
+      .where(sql`${t.status} = 'received'`),
+    index().on(t.ipHash, t.receivedAt),
     // One experience survey per device, school, and meal date (PRD F8). Race-proof; a violation is the
     // "sudah menilai" message. The plain index serves the repeat-health check, which the partial one can't.
     uniqueIndex("report_one_survey_per_device")
@@ -165,7 +177,11 @@ export const response = pgTable(
     authorKind: authorKindEnum().notNull(),
     authorUserId: integer().references(() => user.id),
   },
-  (t) => [index().on(t.episodeId), check("response_one_target", sql`num_nonnulls(${t.reportId}, ${t.episodeId}) = 1`)],
+  (t) => [
+    index().on(t.episodeId),
+    index().on(t.reportId, t.createdAt),
+    check("response_one_target", sql`num_nonnulls(${t.reportId}, ${t.episodeId}) = 1`),
+  ],
 );
 
 // Fixed-window counters for src/lib/rate-limit.ts. Keys never hold a raw IP or email (see keyedHash).
