@@ -1,3 +1,4 @@
+import type { Logger } from "drizzle-orm/logger";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { getEnv } from "@/lib/env";
@@ -5,8 +6,8 @@ import * as schema from "./schema";
 
 // prepare: false — Neon's pooled URL runs PgBouncer in transaction mode, which breaks prepared statements.
 // max: 1 — each serverless instance handles one request at a time; Neon's pooler does the pooling.
-export function createDb(url: string) {
-  return drizzle(postgres(url, { prepare: false, max: 1 }), { schema, casing: "snake_case" });
+export function createDb(url: string, logger: Logger | false = false) {
+  return drizzle(postgres(url, { prepare: false, max: 1 }), { schema, casing: "snake_case", logger });
 }
 
 export type Db = ReturnType<typeof createDb>;

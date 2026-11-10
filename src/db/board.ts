@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
 import { addDays, todayWIB } from "@/lib/date";
 import { computeSignal, counts } from "@/lib/signal";
 import type { Status } from "@/lib/status";
@@ -13,12 +13,18 @@ const TREND_DAYS = 7;
 const MENU_DAYS = 7;
 const LATEST_LIMIT = 8;
 
-function reportsSince(db: Db, since: Date, sppgId?: number) {
+function reportsSince(db: Db, since: Date, kitchens?: number | number[]) {
+  const scope = Array.isArray(kitchens)
+    ? inArray(school.sppgId, kitchens)
+    : kitchens === undefined
+      ? undefined
+      : eq(school.sppgId, kitchens);
+
   return db
     .select(reportFields)
     .from(report)
     .innerJoin(school, eq(report.schoolId, school.id))
-    .where(and(gte(report.receivedAt, since), sppgId === undefined ? undefined : eq(school.sppgId, sppgId)))
+    .where(and(gte(report.receivedAt, since), scope))
     .orderBy(desc(report.receivedAt));
 }
 
@@ -40,21 +46,34 @@ const reportedSchools = (rows: Row[]) =>
       .map((r) => r.schoolId),
   );
 
-/** Every kitchen with today's status, most urgent first (Beranda). */
-export async function getBoard(db: Db, now: Date) {
-  const [kitchens, schools, rows, episodes] = await Promise.all([
-    db.select().from(sppg),
-    db.select({ id: school.id, sppgId: school.sppgId }).from(school),
-    reportsSince(db, windowStart(now)),
-    getOpenEpisodes(db, now),
+/** Today's status, most urgent first. Without a district, show the whole demo board. */
+export async function getBoard(db: Db, now: Date, district?: string) {
+  const kitchens = await db
+    .select()
+    .from(sppg)
+    .where(district === undefined ? undefined : eq(sppg.district, district));
+
+  if (kitchens.length === 0) return [];
+
+  const ids = district === undefined ? undefined : kitchens.map((k) => k.id);
+
+  const [schools, rows, episodes] = await Promise.all([
+    db
+      .select({ sppgId: school.sppgId, total: count() })
+      .from(school)
+      .where(ids ? inArray(school.sppgId, ids) : undefined)
+      .groupBy(school.sppgId),
+    reportsSince(db, windowStart(now), ids),
+    getOpenEpisodes(db, now, ids),
   ]);
 
-  const inSignal = feedsSignal(now);
+  const schoolTotals = new Map(schools.map((s) => [s.sppgId, s.total]));
+  const reportsByKitchen = Map.groupBy(rows.filter(feedsSignal(now)), (r) => r.sppgId);
   const byKitchen = new Map(episodes.map((e) => [e.sppgId, e]));
 
   return kitchens
     .map((k) => {
-      const own = rows.filter((r) => r.sppgId === k.id && inSignal(r));
+      const own = reportsByKitchen.get(k.id) ?? [];
       const open = byKitchen.get(k.id);
 
       return {
@@ -63,7 +82,7 @@ export async function getBoard(db: Db, now: Date) {
         overdueHours: open?.overdueHours ?? null,
         firstDetectedAt: open?.firstDetectedAt ?? null,
         reported: reportedSchools(own).size,
-        total: schools.filter((s) => s.sppgId === k.id).length,
+        total: schoolTotals.get(k.id) ?? 0,
       };
     })
     .toSorted(

@@ -144,7 +144,13 @@ export async function closeEpisode(tx: Tx, episodeId: number, note: string, acto
 
 export const episodeTime = (at: Date) => `${formatDayWIB(at)} ${formatTimeWIB(at)} WIB`;
 
-export async function getOpenEpisodes(db: Db, now: Date, sppgId?: number) {
+export async function getOpenEpisodes(db: Db, now: Date, kitchens?: number | number[]) {
+  const scope = Array.isArray(kitchens)
+    ? inArray(episode.sppgId, kitchens)
+    : kitchens === undefined
+      ? undefined
+      : eq(episode.sppgId, kitchens);
+
   const hasReply = db
     .select({ id: response.id })
     .from(response)
@@ -153,7 +159,7 @@ export async function getOpenEpisodes(db: Db, now: Date, sppgId?: number) {
   const open = await db
     .select({ episode, answered: sql<boolean>`${exists(hasReply)}` })
     .from(episode)
-    .where(and(isNull(episode.closedAt), sppgId === undefined ? undefined : eq(episode.sppgId, sppgId)));
+    .where(and(isNull(episode.closedAt), scope));
 
   if (open.length === 0) return [];
 
@@ -162,8 +168,10 @@ export async function getOpenEpisodes(db: Db, now: Date, sppgId?: number) {
     open.map(({ episode: e }) => e.id),
   );
 
+  const evidenceByEpisode = Map.groupBy(attached.filter(counts), (r) => r.episodeId);
+
   return open.map(({ episode: e, answered }) => {
-    const evidence = attached.filter((r) => r.episodeId === e.id && counts(r));
+    const evidence = evidenceByEpisode.get(e.id) ?? [];
     const priority = priorityEvidence(evidence, e.rule) ?? priorityEvidence(evidence);
 
     const label =

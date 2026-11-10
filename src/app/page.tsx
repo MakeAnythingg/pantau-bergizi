@@ -19,6 +19,7 @@ const STATUS_NOTE: Record<Status, string | null> = {
 
 // `?q=` is free text from the URL; anything that isn't a single string means no search.
 const searchQuery = z.string().trim().max(60).catch("");
+const districtQuery = z.string().trim().min(1).max(120).optional().catch(undefined);
 
 export default function BerandaPage({ searchParams }: PageProps<"/">) {
   return (
@@ -35,21 +36,24 @@ export default function BerandaPage({ searchParams }: PageProps<"/">) {
 
 async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const now = await requestNow();
-  const query = searchQuery.parse((await searchParams).q);
+  const params = await searchParams;
+  const query = searchQuery.parse(params.q);
+  const district = districtQuery.parse(params.wilayah);
   const db = getDb();
-  const [board, matches] = await Promise.all([getBoard(db, now), query ? searchSchools(db, query) : null]);
+  const [board, matches] = await Promise.all([getBoard(db, now, district), query ? searchSchools(db, query) : null]);
   const tally = (s: Status) => board.filter((k) => k.signal.status === s).length;
 
   return (
     <>
       <p className="mt-2.5 max-w-[68ch] text-ink-2 sm:text-base">
-        Kota Sukamaju, {formatDayWIB(now)}. Ringkasan laporan 24 jam terakhir dan episode Prioritas yang masih terbuka.
-        Dapur yang perlu diperiksa lebih dulu ada di atas.
+        {district ?? "Kota Sukamaju"}, {formatDayWIB(now)}. Ringkasan laporan 24 jam terakhir dan episode Prioritas yang
+        masih terbuka. Dapur yang perlu diperiksa lebih dulu ada di atas.
       </p>
 
       <div className="mt-6 mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <search className="w-full lg:max-w-[440px]">
           <form action="/">
+            {district && <input name="wilayah" type="hidden" value={district} />}
             <label className="flex items-center gap-3 rounded-full bg-white px-5 py-3.5 text-ink-3 shadow-[0_0_0_1px_rgb(24_36_44/0.06),0_2px_6px_-2px_rgb(24_36_44/0.14)] focus-within:ring-2 focus-within:ring-navy">
               <MagnifyingGlassIcon size={18} aria-hidden="true" />
               <span className="sr-only">Cari sekolah</span>
@@ -99,6 +103,7 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         </section>
       )}
 
+      {board.length === 0 && <p className="text-ink-2">Belum ada dapur di wilayah ini.</p>}
       <ol className="flex flex-col gap-4">
         {board.map((k) => (
           <KitchenRow key={k.id} kitchen={k} />

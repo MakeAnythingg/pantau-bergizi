@@ -26,6 +26,15 @@ test("board lists kitchens by urgency with their seeded status and coverage", as
   expect(board.map((k) => `${k.reported}/${k.total}`)).toEqual(["4/4", "3/3", "5/5", "0/3"]);
 });
 
+test("district board keeps the same coverage and open episode as the full board", async () => {
+  const db = await getTestDb();
+  const full = await getBoard(db, now);
+  const district = await getBoard(db, now, "Kec. Cempaka");
+  expect(district).toEqual(full.slice(0, 1));
+  expect(district[0]?.firstDetectedAt).toBeInstanceOf(Date);
+  expect(await getBoard(db, now, "Wilayah tidak dikenal")).toEqual([]);
+});
+
 test("rapor has today's menu, schools, a 7-day trend and recent reports", async () => {
   const db = await getTestDb();
   const melati = (await getBoard(db, now)).at(0);
