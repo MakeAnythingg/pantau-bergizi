@@ -317,7 +317,7 @@ export function ReportForm({
       <input type="hidden" name="kind" value={path} />
 
       <p className="text-sm font-semibold text-ink-3">Dapur: {school.sppgName}</p>
-      <h1 className="font-heading text-[30px] leading-[1.05] font-bold tracking-tight">
+      <h1 className="font-heading text-[30px] leading-[1.05] font-extrabold tracking-tight">
         {health ? "Ada yang sakit setelah makan?" : school.name}
       </h1>
       {health && <p className="mt-1 text-ink-2">{school.name}</p>}
@@ -470,7 +470,7 @@ function Success({ kind, code }: { kind: Path; code: string }) {
 
   return (
     <section aria-labelledby="terkirim" className="pb-6">
-      <h1 id="terkirim" className="font-heading text-[30px] leading-[1.05] font-bold tracking-tight">
+      <h1 id="terkirim" className="font-heading text-[30px] leading-[1.05] font-extrabold tracking-tight">
         Terima kasih, laporan terkirim
       </h1>
       <div className="well mt-6 text-center">

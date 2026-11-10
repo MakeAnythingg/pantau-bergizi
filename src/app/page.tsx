@@ -24,7 +24,7 @@ const districtQuery = z.string().trim().min(1).max(120).optional().catch(undefin
 export default function BerandaPage({ searchParams }: PageProps<"/">) {
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-2 pb-14 sm:px-8">
-      <h1 className="font-heading text-[32px] leading-[1.05] font-bold tracking-tight sm:text-[52px]">
+      <h1 className="font-heading text-[32px] leading-[1.05] font-extrabold tracking-tight sm:text-[52px]">
         Kondisi dapur MBG hari ini
       </h1>
       <Suspense fallback={<div className="mt-3 h-[60vh]" />}>
@@ -123,13 +123,13 @@ function KitchenRow({ kitchen: k }: { kitchen: BoardKitchen }) {
         className="tray grid gap-2.5 transition-transform outline-none hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-navy md:grid-cols-[250px_1fr_250px]"
       >
         <div className={cn("well flex flex-col justify-center md:min-h-[104px]", STATUS_FILL[k.signal.status])}>
-          <b className="font-heading text-[21px] leading-[1.05] font-bold md:text-[25px]">
+          <b className="font-heading text-[21px] leading-[1.05] font-extrabold md:text-[25px]">
             {STATUS_LABEL[k.signal.status]}
           </b>
           {note && <small className="mt-1.5 text-[13px] font-medium opacity-90">{note}</small>}
         </div>
         <div className="well">
-          <div className="flex flex-wrap items-baseline gap-x-2.5 font-heading text-[21px] leading-tight font-bold tracking-tight md:text-[23px]">
+          <div className="flex flex-wrap items-baseline gap-x-2.5 font-heading text-[21px] leading-tight font-extrabold tracking-tight md:text-[23px]">
             {k.name}
             <span className="font-sans text-sm font-medium text-ink-3">{k.district}</span>
           </div>
