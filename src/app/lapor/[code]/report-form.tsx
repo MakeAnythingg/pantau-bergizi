@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  ArrowRightIcon,
   CalendarBlankIcon,
+  FirstAidKitIcon,
   SmileyIcon,
   SmileyMehIcon,
   SmileySadIcon,
@@ -323,7 +325,40 @@ export function ReportForm({
       </h1>
       {health && <p className="mt-1 text-ink-2">{school.name}</p>}
 
-      <FieldGroup className="mt-6 gap-6">
+      {/* The health path sits first so a parent with a sick child never scrolls past the menu survey to find it. */}
+      {health ? (
+        <button
+          type="button"
+          onClick={() => {
+            setPath("experience");
+          }}
+          className="mt-3 text-sm font-bold text-navy"
+        >
+          ← Kembali ke penilaian menu
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setPath("health");
+            }}
+            className="mt-5 flex w-full items-center gap-3 rounded-[24px] bg-alarm-soft p-4 text-left text-alarm transition-transform duration-100 ease-out active:scale-[0.98]"
+          >
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white shadow-sm">
+              <FirstAidKitIcon weight="duotone" aria-hidden="true" className="size-7" />
+            </span>
+            <span className="flex-1">
+              <b className="block text-[17px]">Ada yang sakit setelah makan?</b>
+              <span className="text-sm font-semibold">Laporkan keluhan kesehatan</span>
+            </span>
+            <ArrowRightIcon weight="bold" aria-hidden="true" className="size-5" />
+          </button>
+          <p className="mt-6 text-sm font-extrabold text-ink-3">Atau nilai makan siang hari ini</p>
+        </>
+      )}
+
+      <FieldGroup className={cn("gap-6", health ? "mt-6" : "mt-3")}>
         <Choices
           legend="Saya"
           name="reporterRole"
@@ -451,17 +486,6 @@ export function ReportForm({
           {locating ? "Memeriksa lokasi…" : pending ? "Mengirim…" : health ? "Kirim laporan" : "Kirim penilaian"}
         </Button>
       )}
-
-      <Button
-        type="button"
-        variant={health ? "outline" : "destructive"}
-        onClick={() => {
-          setPath(health ? "experience" : "health");
-        }}
-        className={cn("mt-6 h-12 w-full justify-between text-[15px] font-bold", health && "bg-card text-primary")}
-      >
-        {health ? "← Kembali ke penilaian menu" : "⚠ Ada yang sakit setelah makan? →"}
-      </Button>
     </form>
   );
 }
