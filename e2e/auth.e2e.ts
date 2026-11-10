@@ -27,9 +27,12 @@ for (const { email, heading } of accounts) {
 
     await expect(page).toHaveURL(/\/dasbor$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(heading);
+    const header = page.getByRole("banner");
+    await expect(header.getByRole("link", { name: "Dasbor" })).toBeVisible();
 
     await page.getByRole("button", { name: "Keluar" }).click();
     await expect(page).toHaveURL(/\/masuk$/);
+    await expect(header.getByRole("link", { name: "Masuk" })).toBeVisible();
     await page.goto("/dasbor");
     await expect(page).toHaveURL(/\/masuk$/);
   });

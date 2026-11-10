@@ -227,7 +227,7 @@ export async function getManagerDashboard(db: Db, sppgId: number, now: Date, pag
 }
 
 export async function getModeratorEpisodes(db: Db, now: Date) {
-  const [open, closed, kitchens] = await Promise.all([
+  const [open, closed] = await Promise.all([
     getOpenEpisodes(db, now),
     db
       .select({ id: episode.id, kitchenName: sppg.name, closedAt: episode.closedAt, note: episode.closedNote })
@@ -236,8 +236,20 @@ export async function getModeratorEpisodes(db: Db, now: Date) {
       .where(isNotNull(episode.closedAt))
       .orderBy(desc(episode.closedAt), desc(episode.id))
       .limit(10),
-    db.select().from(sppg),
   ]);
+
+  // Only the kitchens with an open episode: at national scale the full table is 30k rows.
+  const kitchens = open.length
+    ? await db
+        .select({ id: sppg.id, name: sppg.name })
+        .from(sppg)
+        .where(
+          inArray(
+            sppg.id,
+            open.map((item) => item.sppgId),
+          ),
+        )
+    : [];
 
   const reports = open.length
     ? await db

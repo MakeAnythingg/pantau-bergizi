@@ -94,7 +94,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
         </Link>{" "}
         / Rapor harian, {formatDayWIB(now)}
       </p>
-      <h1 className="font-heading text-[32px] leading-[1.05] font-bold tracking-tight sm:text-[52px]">
+      <h1 className="font-heading text-[32px] leading-[1.05] font-extrabold tracking-tight sm:text-[52px]">
         {kitchen.name}
       </h1>
       <p className="mt-1.5 mb-6 text-ink-2">
@@ -109,7 +109,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
             STATUS_FILL[signal.status],
           )}
         >
-          <div className="font-heading text-5xl leading-[0.9] font-bold tracking-tight lg:text-[64px]">
+          <div className="font-heading text-5xl leading-[0.9] font-extrabold tracking-tight lg:text-[64px]">
             {STATUS_LABEL[signal.status]}
             <small className="mt-3 block max-w-[28ch] font-sans text-[15px] leading-snug font-medium tracking-normal opacity-95">
               {STATUS_HINT[signal.status]}
@@ -134,7 +134,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
         <Cell title="Menu hari ini, dilaporkan pengelola" className="lg:col-span-3">
           {menu ? (
             <>
-              <p className="font-heading text-[26px] leading-tight font-bold tracking-tight">{menu.name}</p>
+              <p className="font-heading text-[26px] leading-tight font-extrabold tracking-tight">{menu.name}</p>
               <ul className="my-3 flex flex-wrap gap-1.5">
                 {menu.composition.split(",").map((item) => (
                   <li
@@ -209,7 +209,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
 
       <EpisodeHistory episodes={episodeHistory} />
 
-      <h2 className="mt-9 font-heading text-[26px] leading-tight font-bold tracking-tight">Laporan terbaru</h2>
+      <h2 className="mt-9 font-heading text-[26px] leading-tight font-extrabold tracking-tight">Laporan terbaru</h2>
       <p className="text-sm text-ink-3">Catatan pelapor tampil setelah ditinjau moderator.</p>
       <div className="mt-3.5 rounded-[20px] bg-white px-6 py-1 shadow-[0_0_0_1px_rgb(24_36_44/0.05),0_6px_18px_-12px_rgb(24_36_44/0.35)]">
         {latest.length === 0 ? (
@@ -279,7 +279,7 @@ function responseTime(from: Date, to: Date) {
 function EpisodeHistory({ episodes }: { episodes: Rapor["episodeHistory"] }) {
   return (
     <section className="mt-9" aria-labelledby="episode-history">
-      <h2 id="episode-history" className="font-heading text-[26px] leading-tight font-bold tracking-tight">
+      <h2 id="episode-history" className="font-heading text-[26px] leading-tight font-extrabold tracking-tight">
         Riwayat episode
       </h2>
       {episodes.length === 0 ? (
@@ -308,7 +308,7 @@ function EpisodeHistory({ episodes }: { episodes: Rapor["episodeHistory"] }) {
 function PerMenu({ perMenu: { days, mostLeftover } }: { perMenu: Rapor["perMenu"] }) {
   return (
     <section aria-labelledby="per-menu" className="mt-9">
-      <h2 id="per-menu" className="font-heading text-[26px] leading-tight font-bold tracking-tight">
+      <h2 id="per-menu" className="font-heading text-[26px] leading-tight font-extrabold tracking-tight">
         7 hari terakhir per menu
       </h2>
       <p className="text-sm text-ink-3">

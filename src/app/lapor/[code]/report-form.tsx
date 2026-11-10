@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  ArrowRightIcon,
   CalendarBlankIcon,
+  FirstAidKitIcon,
   SmileyIcon,
   SmileyMehIcon,
   SmileySadIcon,
@@ -12,6 +14,7 @@ import {
 import Link from "next/link";
 import { type ReactNode, type SubmitEvent, startTransition, useActionState, useId, useState } from "react";
 import { id as idLocale } from "react-day-picker/locale";
+import { LACAK_HANDOFF_KEY } from "@/app/lacak/lacak-view";
 import { Turnstile } from "@/components/turnstile";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -317,12 +320,45 @@ export function ReportForm({
       <input type="hidden" name="kind" value={path} />
 
       <p className="text-sm font-semibold text-ink-3">Dapur: {school.sppgName}</p>
-      <h1 className="font-heading text-[30px] leading-[1.05] font-bold tracking-tight">
+      <h1 className="font-heading text-[30px] leading-[1.05] font-extrabold tracking-tight">
         {health ? "Ada yang sakit setelah makan?" : school.name}
       </h1>
       {health && <p className="mt-1 text-ink-2">{school.name}</p>}
 
-      <FieldGroup className="mt-6 gap-6">
+      {/* The health path sits first so a parent with a sick child never scrolls past the menu survey to find it. */}
+      {health ? (
+        <button
+          type="button"
+          onClick={() => {
+            setPath("experience");
+          }}
+          className="mt-3 text-sm font-bold text-navy"
+        >
+          ← Kembali ke penilaian menu
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setPath("health");
+            }}
+            className="mt-5 flex w-full items-center gap-3 rounded-[24px] bg-alarm-soft p-4 text-left text-alarm transition-transform duration-100 ease-out active:scale-[0.98]"
+          >
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white shadow-sm">
+              <FirstAidKitIcon weight="duotone" aria-hidden="true" className="size-7" />
+            </span>
+            <span className="flex-1">
+              <b className="block text-[17px]">Ada yang sakit setelah makan?</b>
+              <span className="text-sm font-semibold">Laporkan keluhan kesehatan</span>
+            </span>
+            <ArrowRightIcon weight="bold" aria-hidden="true" className="size-5" />
+          </button>
+          <p className="mt-6 text-sm font-extrabold text-ink-3">Atau nilai makan siang hari ini</p>
+        </>
+      )}
+
+      <FieldGroup className={cn("gap-6", health ? "mt-6" : "mt-3")}>
         <Choices
           legend="Saya"
           name="reporterRole"
@@ -450,17 +486,6 @@ export function ReportForm({
           {locating ? "Memeriksa lokasi…" : pending ? "Mengirim…" : health ? "Kirim laporan" : "Kirim penilaian"}
         </Button>
       )}
-
-      <Button
-        type="button"
-        variant={health ? "outline" : "destructive"}
-        onClick={() => {
-          setPath(health ? "experience" : "health");
-        }}
-        className={cn("mt-6 h-12 w-full justify-between text-[15px] font-bold", health && "bg-card text-primary")}
-      >
-        {health ? "← Kembali ke penilaian menu" : "⚠ Ada yang sakit setelah makan? →"}
-      </Button>
     </form>
   );
 }
@@ -470,7 +495,7 @@ function Success({ kind, code }: { kind: Path; code: string }) {
 
   return (
     <section aria-labelledby="terkirim" className="pb-6">
-      <h1 id="terkirim" className="font-heading text-[30px] leading-[1.05] font-bold tracking-tight">
+      <h1 id="terkirim" className="font-heading text-[30px] leading-[1.05] font-extrabold tracking-tight">
         Terima kasih, laporan terkirim
       </h1>
       <div className="well mt-6 text-center">
@@ -503,8 +528,18 @@ function Success({ kind, code }: { kind: Path; code: string }) {
           </AlertDescription>
         </Alert>
       )}
-      <Link href="/lacak" className={cn(buttonVariants(), "mt-5 h-12 w-full text-base font-bold")}>
-        Lacak laporan
+      <Link
+        href="/lacak"
+        onClick={() => {
+          try {
+            sessionStorage.setItem(LACAK_HANDOFF_KEY, code);
+          } catch {
+            // Storage blocked: /lacak asks for the code as usual.
+          }
+        }}
+        className={cn(buttonVariants(), "mt-5 h-12 w-full text-base font-bold")}
+      >
+        Lihat status laporan
       </Link>
     </section>
   );

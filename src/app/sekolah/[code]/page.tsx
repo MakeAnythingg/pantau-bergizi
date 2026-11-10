@@ -39,7 +39,7 @@ async function SekolahView({ params }: Pick<PageProps<"/sekolah/[code]">, "param
     <>
       <div className="print:hidden">
         <p className="mb-1.5 text-sm font-semibold text-ink-3">Halaman sekolah</p>
-        <h1 className="font-heading text-[32px] leading-[1.05] font-bold tracking-tight sm:text-[44px]">
+        <h1 className="font-heading text-[32px] leading-[1.05] font-extrabold tracking-tight sm:text-[44px]">
           {school.name}
         </h1>
         <Badge
@@ -79,7 +79,7 @@ async function SekolahView({ params }: Pick<PageProps<"/sekolah/[code]">, "param
       {/* The A4 poster: shown only when printing. */}
       <div className="hidden min-h-[260mm] flex-col items-center justify-between text-center print:flex">
         <div>
-          <p className="font-heading text-[40px] leading-tight font-bold">{school.name}</p>
+          <p className="font-heading text-[40px] leading-tight font-extrabold">{school.name}</p>
           <p className="mt-2 text-lg">Dapur: {school.sppgName}</p>
         </div>
         <QrCode value={url} label={qrLabel} className="w-[150mm]" />

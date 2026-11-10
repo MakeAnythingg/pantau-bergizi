@@ -149,7 +149,13 @@ test("the issued code finds its report, also lowercase and without the dash; a w
   expect(result.code).toMatch(/^[2-9A-HJKMNP-Z]{5}-[2-9A-HJKMNP-Z]{5}$/);
 
   const found = await findReportByCode(db, result.code);
-  expect(found).toMatchObject({ kind: "health", schoolName: "SDN Harapan 1", status: "received", responses: [] });
+  expect(found).toMatchObject({
+    kind: "health",
+    schoolName: "SDN Harapan 1",
+    kitchenName: "SPPG Melati 01",
+    status: "received",
+    responses: [],
+  });
   expect((await findReportByCode(db, result.code.replace("-", " ").toLowerCase()))?.id).toBe(found?.id ?? -1);
   expect(await findReportByCode(db, "ZZZZZ-ZZZZZ")).toBeNull();
   expect(await findReportByCode(db, "not a code")).toBeNull();

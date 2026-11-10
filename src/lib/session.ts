@@ -15,6 +15,17 @@ async function getSession(): Promise<Session | null> {
   return session && currentSession(getDb(), session);
 }
 
+/**
+ * Header label only: a validly signed, unexpired cookie, without the database check. Never use it to grant access;
+ * a revoked session still shows "Dasbor" until it expires, and /dasbor's requireRole then sends it to /masuk.
+ */
+export async function hasStaffCookie(): Promise<boolean> {
+  await connection();
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+
+  return token !== undefined && verifySession(token, getEnv().SESSION_SECRET) !== null;
+}
+
 /** Every staff page and server action calls this first. Redirects to /masuk when not allowed. */
 export async function requireRole(...roles: Role[]): Promise<Session> {
   const session = await getSession();

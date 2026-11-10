@@ -85,15 +85,16 @@ test("teacher group review opens Prioritas and the kitchen's episode reply reach
   await expect(queue.getByRole("article").first()).toContainText(note);
   await queue.getByRole("article").filter({ hasText: note }).getByRole("button", { name: "Tinjau" }).click();
 
-  const episode = page
-    .getByRole("region", { name: "Episode Prioritas" })
-    .getByRole("article")
-    .filter({ hasText: "SPPG Dahlia 03" });
+  // Reviewing the group observation opens the episode in Dahlia's kitchen group.
+  const kitchen = queue.getByRole("region", { name: "SPPG Dahlia 03" });
 
-  await expect(episode).toContainText("Ditinjau moderator");
-  await episode.getByLabel("Status penerusan").selectOption("simulated_puskesmas");
-  await episode.getByRole("button", { name: "Simpan penerusan" }).click();
-  await expect(episode.getByRole("paragraph").filter({ hasText: /^Simulasi Puskesmas$/ })).toBeVisible();
+  await expect(kitchen).toContainText("Ditinjau moderator");
+  await kitchen.getByRole("button", { name: "Penerusan" }).click();
+  const forwarding = page.getByRole("dialog", { name: "Penerusan episode" });
+  await forwarding.getByLabel("Status penerusan").selectOption("simulated_puskesmas");
+  await forwarding.getByRole("button", { name: "Simpan penerusan" }).click();
+  await expect(forwarding).toBeHidden();
+  await expect(kitchen.locator("span", { hasText: /^Simulasi Puskesmas$/ })).toBeVisible();
 
   await page.goto("/");
   await expect(page.getByRole("link", { name: /SPPG Dahlia 03/ })).toContainText("Prioritas");
@@ -106,8 +107,9 @@ test("teacher group review opens Prioritas and the kitchen's episode reply reach
   await page.goto("/lacak");
   await page.getByLabel("Kode lacak").fill(code);
   await page.getByRole("button", { name: "Lacak", exact: true }).click();
-  await expect(page.getByText(/Belum ditanggapi · \d+ jam/)).toBeVisible();
-  await expect(page.getByRole("region", { name: "Tanggapan pengelola untuk episode ini" })).toContainText(reply);
+  const status = page.getByRole("region", { name: "Laporan kamu" });
+  await expect(status.getByRole("heading", { level: 2 })).toHaveText("SPPG Dahlia 03 sudah menjawab");
+  await expect(status).toContainText(reply);
 });
 
 test("moderator rejection removes a health report from Rapor", async ({ page }) => {
@@ -123,9 +125,11 @@ test("moderator rejection removes a health report from Rapor", async ({ page }) 
 
   await login(page, "moderator@pantaubergizi.id");
   const card = page.getByRole("region", { name: "Antrean tinjauan" }).getByRole("article").filter({ hasText: note });
-  await card.getByText("Tolak laporan", { exact: true }).click();
-  await card.getByLabel("Alasan penolakan").fill("Laporan mengacu pada menu dari dapur lain.");
+  await card.locator("summary").click();
   await card.getByRole("button", { name: "Tolak", exact: true }).click();
+  const reject = page.getByRole("dialog", { name: /^Tolak laporan/ });
+  await reject.getByLabel("Alasan penolakan").fill("Laporan mengacu pada menu dari dapur lain.");
+  await reject.getByRole("button", { name: "Tolak laporan" }).click();
   await expect(card).toHaveCount(0);
 
   await page.goto("/sppg/4");
@@ -158,6 +162,7 @@ test("server actions refuse missing sessions and wrong roles", async ({ page, br
     await expectActionDenied(page, await moderatorRequest);
 
     const menu = page.getByRole("region", { name: "Menu hari ini" });
+    await menu.getByText("Ubah menu").click();
     await menu.getByLabel("Nama menu").fill(" ");
 
     const managerRequest = page.waitForRequest(

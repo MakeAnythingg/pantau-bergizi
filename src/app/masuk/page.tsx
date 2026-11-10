@@ -19,7 +19,7 @@ export default function MasukPage() {
           <LoginForm />
         </CardContent>
       </Card>
-      <section className="rounded-lg border p-4 text-sm">
+      <section className="rounded-[20px] bg-well p-4 text-sm">
         <h2 className="font-medium">Akun demo</h2>
         <p className="text-muted-foreground">
           Kata sandi semua akun: <code>{DEMO_PASSWORD}</code>
