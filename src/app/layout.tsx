@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Nunito, Zilla_Slab } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
 import { BrandMark } from "@/components/tray";
+import { hasStaffCookie } from "@/lib/session";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -19,6 +21,19 @@ export const metadata: Metadata = {
   title: "Pantau Bergizi",
   description: "Rapor harian per dapur MBG dari pengalaman penerimanya.",
 };
+
+function StaffLink({ signedIn }: { signedIn: boolean }) {
+  return (
+    <Link href={signedIn ? "/dasbor" : "/masuk"} className="text-navy">
+      {signedIn ? "Dasbor" : "Masuk"}
+    </Link>
+  );
+}
+
+/** Per-request hole in the cached shell: staff see "Dasbor" instead of "Masuk". */
+async function HeaderStaffLink() {
+  return <StaffLink signedIn={await hasStaffCookie()} />;
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -39,9 +54,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </Link>
               <Link href="/lacak">Lacak</Link>
               <Link href="/metode">Metode</Link>
-              <Link href="/masuk" className="text-navy">
-                Masuk
-              </Link>
+              <Suspense fallback={<StaffLink signedIn={false} />}>
+                <HeaderStaffLink />
+              </Suspense>
             </div>
           </nav>
         </header>
