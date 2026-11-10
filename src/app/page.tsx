@@ -2,6 +2,7 @@ import { MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { Suspense } from "react";
 import { z } from "zod";
+import { buttonVariants } from "@/components/ui/button";
 import { Cups, STATUS_FILL, STATUS_SWATCH } from "@/components/tray";
 import { type BoardKitchen, getBoard, searchSchools } from "@/db/board";
 import { getDb } from "@/db/index";
@@ -51,7 +52,7 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       </p>
 
       <div className="mt-6 mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <search className="w-full lg:max-w-[440px]">
+        <search id="cari" className="w-full scroll-mt-4 lg:max-w-[440px]">
           <form action="/">
             {district && <input name="wilayah" type="hidden" value={district} />}
             <label className="flex items-center gap-3 rounded-full bg-white px-5 py-3.5 text-ink-3 shadow-[0_0_0_1px_rgb(24_36_44/0.06),0_2px_6px_-2px_rgb(24_36_44/0.14)] focus-within:ring-2 focus-within:ring-navy">
@@ -62,7 +63,7 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                 type="search"
                 defaultValue={query}
                 maxLength={60}
-                placeholder="Cari sekolah anak Anda"
+                placeholder="Cari sekolah untuk melapor"
                 className="w-full bg-transparent text-ink outline-none placeholder:text-ink-3"
               />
             </label>
@@ -88,13 +89,15 @@ async function Board({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
           ) : (
             <ul className="divide-y divide-well">
               {matches.map((s) => (
-                <li key={s.code}>
-                  <Link
-                    href={`/sppg/${s.sppgId}`}
-                    className="flex flex-col py-2.5 hover:text-navy sm:flex-row sm:justify-between sm:gap-4"
-                  >
-                    <b className="font-semibold">{s.name}</b>
-                    <span className="text-ink-2">dilayani {s.sppgName}</span>
+                <li key={s.code} className="flex items-center gap-3 py-2.5">
+                  <span className="flex-1">
+                    <b className="block font-semibold">{s.name}</b>
+                    <Link href={`/sppg/${s.sppgId}`} className="text-sm text-ink-2 underline underline-offset-4">
+                      Rapor {s.sppgName}
+                    </Link>
+                  </span>
+                  <Link href={`/lapor/${s.code}`} className={buttonVariants({ size: "sm" })}>
+                    Lapor
                   </Link>
                 </li>
               ))}

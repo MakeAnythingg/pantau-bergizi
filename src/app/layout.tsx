@@ -46,12 +46,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               className="flex items-center gap-2 font-brand text-lg font-bold tracking-tight whitespace-nowrap sm:gap-2.5 sm:text-xl"
             >
               <BrandMark />
-              Pantau Bergizi
+              <span className="max-[400px]:sr-only">Pantau Bergizi</span>
             </Link>
             <div className="flex gap-3 text-sm font-semibold text-ink-2 sm:gap-7 sm:text-[15px]">
               <Link href="/data" className="max-sm:hidden">
                 Data
               </Link>
+              <Link href="/#cari">Lapor</Link>
               <Link href="/lacak">Lacak</Link>
               <Link href="/metode">Metode</Link>
               <Suspense fallback={<StaffLink signedIn={false} />}>

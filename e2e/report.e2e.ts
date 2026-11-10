@@ -27,6 +27,16 @@ async function reportSickness(page: Page, school: string): Promise<string> {
   return (await code.textContent()) ?? "";
 }
 
+test("a parent finds the report form from any page through Lapor and the school search", async ({ page }) => {
+  await page.goto("/metode");
+  await page.getByRole("banner").getByRole("link", { name: "Lapor" }).click();
+  await page.getByRole("searchbox", { name: "Cari sekolah" }).fill("Harapan 1");
+  await page.keyboard.press("Enter");
+  await page.getByRole("region", { name: "Hasil pencarian" }).getByRole("link", { name: "Lapor" }).click();
+  await expect(page).toHaveURL(/\/lapor\/sdn-harapan-1$/);
+  await expect(page.getByRole("button", { name: /Ada yang sakit setelah makan/ })).toBeVisible();
+});
+
 test("path A on a phone with location denied ends on a tracking code that opens its status", async ({ page }) => {
   await rateMeal(page, "sdn-cempaka-3");
 
