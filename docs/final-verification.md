@@ -1,12 +1,17 @@
 # Verifikasi Final Pantau Bergizi
 
-Pembaruan 10 November 2026. [PRD dan checklist penerimaan](../PRD_Pantau_Bergizi_V2_1.md#yang-harus-diverifikasi-sebelum-final) · [Tracker fitur #10](https://github.com/MakeAnythingg/pantau-bergizi/issues/10) · [Pengumpulan #9](https://github.com/MakeAnythingg/pantau-bergizi/issues/9)
+Pembaruan 11 November 2026. [PRD dan checklist penerimaan](../PRD_Pantau_Bergizi_V2_1.md#yang-harus-diverifikasi-sebelum-final) · [Tracker fitur #10](https://github.com/MakeAnythingg/pantau-bergizi/issues/10) · [Pengumpulan #9](https://github.com/MakeAnythingg/pantau-bergizi/issues/9)
 
 ## Status fitur
 
 - #3, #4, #5, #6, dan #8 ditutup di GitHub. Hasil uji skala lima alur ada di [README](../README.md#bukti-skala-nasional).
-- #7 sudah masuk ke `main`. Halaman Data dan Metode tersedia di deployment. Catat persetujuan teks Indonesia dari Praffi sebelum menutup issue. [Issue #7](https://github.com/MakeAnythingg/pantau-bergizi/issues/7) · [PR #15](https://github.com/MakeAnythingg/pantau-bergizi/pull/15)
+- #7 sudah masuk ke `main`. Halaman Data dan Metode tersedia di deployment. Catat persetujuan teks Indonesia dari Praffi sebelum menutup issue. Teks Metode ditulis ulang menjadi Tanya Pantau di #19, jadi persetujuan juga mencakup teks itu. [Issue #7](https://github.com/MakeAnythingg/pantau-bergizi/issues/7) · [PR #15](https://github.com/MakeAnythingg/pantau-bergizi/pull/15)
 - #9 mencakup pengumpulan berkas lomba, uji pengguna di HP, dan verifikasi pada deployment.
+- #19 mendesain ulang tampilan seluruh aplikasi dan sudah masuk ke `main`. [PR #19](https://github.com/MakeAnythingg/pantau-bergizi/pull/19)
+
+## Pengecekan 11 November
+
+Desain ulang dari #19 masuk ke `main` sebagai `0bef1ac` dan ter-deploy otomatis. Pada head PR (`2821e8e`), `bun run check` lulus dengan 101 tes, dan 22 tes Playwright lulus, termasuk tes baru untuk jalur Lapor dari header dan pencarian sekolah. #19 tidak menambah migrasi, jadi database produksi tidak perlu dimigrasi. Setelah deploy, Beranda, Lacak, Metode, Rapor SPPG Melati 01, dan formulir lapor SDN Harapan 1 menjawab HTTP 200 di deployment publik, dan header memuat tautan Lapor. Skenario pada tabel di bawah belum diulang pada tampilan baru. [Commit merge](https://github.com/MakeAnythingg/pantau-bergizi/commit/0bef1ac0912d5bab5819af851e706e0fd35cf979) · [Screenshot sebelum dan sesudah](https://github.com/MakeAnythingg/pantau-bergizi/pull/19)
 
 ## Pengecekan 10 November
 
