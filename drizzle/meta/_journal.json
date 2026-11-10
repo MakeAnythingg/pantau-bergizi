@@ -50,6 +50,13 @@
       "when": 1794245330136,
       "tag": "0006_staff_dashboards",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794278434351,
+      "tag": "0007_scale_query_indexes",
+      "breakpoints": true
     }
   ]
 }

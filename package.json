@@ -17,6 +17,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun scripts/db-seed.ts",
+    "db:seed:scale": "bun scripts/db-seed-scale.ts",
+    "db:bench:scale": "bun scripts/db-bench-scale.ts",
     "db:reset": "bun scripts/db-reset.ts"
   },
   "dependencies": {

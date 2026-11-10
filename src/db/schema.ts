@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQLWrapper } from "drizzle-orm";
 import {
   type AnyPgColumn,
   boolean,
@@ -17,7 +17,7 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
-import { NOTE_MAX_CHARS } from "@/lib/thresholds";
+import { NOTE_MAX_CHARS, TEACHER_GROUP_MIN_AFFECTED } from "@/lib/thresholds";
 
 const id = () => integer().primaryKey().generatedAlwaysAsIdentity();
 const createdNow = () => timestamp({ withTimezone: true }).notNull().defaultNow();
@@ -46,11 +46,9 @@ export const auditActionEnum = pgEnum("audit_action", [
   "episode.forwarding_changed",
 ]);
 
-export const sppg = pgTable("sppg", {
-  id: id(),
-  name: text().notNull(),
-  district: text().notNull(),
-});
+export const sppg = pgTable("sppg", { id: id(), name: text().notNull(), district: text().notNull() }, (t) => [
+  index().on(t.district),
+]);
 
 export const school = pgTable(
   "school",
@@ -82,6 +80,18 @@ export const menu = pgTable(
   },
   (t) => [unique().on(t.sppgId, t.servedOn)],
 );
+
+// Keep the WHERE and ORDER BY identical in the query and its partial expression index.
+export function reviewQueueEligible(t: Record<"status" | "duplicateOf" | "kind" | "problems" | "note", SQLWrapper>) {
+  return sql`${t.status} = 'received' and ${t.duplicateOf} is null
+    and (${t.kind} = 'health' or ${t.problems} && array['stale', 'foreign_object']::problem[] or ${t.note} is not null)`;
+}
+
+export function reviewQueueRank(t: Record<"kind" | "reporterRole" | "subject" | "affectedCount", SQLWrapper>) {
+  return sql`(case when ${t.kind} = 'health' and ${t.reporterRole} = 'teacher' and ${t.subject} = 'group'
+    and ${t.affectedCount} >= ${sql.raw(String(TEACHER_GROUP_MIN_AFFECTED))}
+    then 0 when ${t.kind} = 'health' then 1 else 2 end)`;
+}
 
 export const report = pgTable(
   "report",
@@ -115,9 +125,11 @@ export const report = pgTable(
     index().on(t.schoolId, t.receivedAt),
     index().on(t.status),
     index().on(t.episodeId),
-    index("report_review_queue_idx")
-      .on(t.receivedAt)
-      .where(sql`${t.status} = 'received'`),
+    index("report_review_queue_priority_idx").on(reviewQueueRank(t), t.receivedAt, t.id).where(reviewQueueEligible(t)),
+    index().on(t.schoolId, t.kind, t.consumedOn),
+    index()
+      .on(t.duplicateOf)
+      .where(sql`${t.duplicateOf} is not null`),
     index().on(t.ipHash, t.receivedAt),
     // One experience survey per device, school, and meal date (PRD F8). Race-proof; a violation is the
     // "sudah menilai" message. The plain index serves the repeat-health check, which the partial one can't.

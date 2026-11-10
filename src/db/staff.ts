@@ -1,26 +1,11 @@
-import {
-  and,
-  arrayOverlaps,
-  asc,
-  count,
-  desc,
-  eq,
-  exists,
-  inArray,
-  isNotNull,
-  isNull,
-  ne,
-  notExists,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, asc, count, desc, eq, exists, inArray, isNotNull, isNull, ne, notExists, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { todayWIB } from "@/lib/date";
-import { SURGE_MIN_REPORTS, SURGE_WINDOW_MINUTES, TEACHER_GROUP_MIN_AFFECTED } from "@/lib/thresholds";
+import { SURGE_MIN_REPORTS, SURGE_WINDOW_MINUTES } from "@/lib/thresholds";
 import { getKitchenSignal } from "./board";
 import { getEpisodeReplies, getOpenEpisodes } from "./episodes";
 import type { Db } from "./index";
-import { episode, menu, report, response, school, sppg } from "./schema";
+import { episode, menu, report, response, reviewQueueEligible, reviewQueueRank, school, sppg } from "./schema";
 import { reportFields } from "./signal-reports";
 
 const PAGE_SIZE = 20;
@@ -143,13 +128,6 @@ export async function getReviewQueue(db: Db, page: number) {
       ),
     );
 
-  const teacherGroup = and(
-    eq(report.kind, "health"),
-    eq(report.reporterRole, "teacher"),
-    eq(report.subject, "group"),
-    sql`${report.affectedCount} >= ${TEACHER_GROUP_MIN_AFFECTED}`,
-  );
-
   const rows = await db
     .select({
       ...staffFields,
@@ -159,22 +137,8 @@ export async function getReviewQueue(db: Db, page: number) {
     .from(report)
     .innerJoin(school, eq(school.id, report.schoolId))
     .innerJoin(sppg, eq(sppg.id, school.sppgId))
-    .where(
-      and(
-        sql`${report.status} = 'received'`,
-        isNull(report.duplicateOf),
-        or(
-          eq(report.kind, "health"),
-          arrayOverlaps(report.problems, ["stale", "foreign_object"]),
-          isNotNull(report.note),
-        ),
-      ),
-    )
-    .orderBy(
-      sql`case when ${teacherGroup} then 0 when ${report.kind} = 'health' then 1 else 2 end`,
-      asc(report.receivedAt),
-      asc(report.id),
-    )
+    .where(reviewQueueEligible(report))
+    .orderBy(reviewQueueRank(report), asc(report.receivedAt), asc(report.id))
     .limit(PAGE_SIZE + 1)
     .offset((page - 1) * PAGE_SIZE);
 
