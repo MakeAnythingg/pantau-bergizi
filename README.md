@@ -123,7 +123,6 @@ Kelima alur memenuhi target pada ketiga sampel. Semua statement pada sampel pert
 - [x] Halaman Data nasional dan Metode
 - [x] Bukti skala nasional untuk lima alur kueri
 - [x] Desain ulang tampilan: gaya Campuran, Lacak dengan jalur status dan obrolan, antrean moderator per dapur, daftar tugas pengelola, Metode sebagai Tanya Pantau, dan tombol Lapor di header serta pencarian sekolah ([#19](https://github.com/MakeAnythingg/pantau-bergizi/pull/19))
-- [ ] Persetujuan Praffi untuk teks Indonesia di Data Nasional dan Metode, termasuk teks Tanya Pantau yang baru ([#7](https://github.com/MakeAnythingg/pantau-bergizi/issues/7))
 - [ ] Pengumpulan lomba dan verifikasi Final di deployment ([#9](https://github.com/MakeAnythingg/pantau-bergizi/issues/9))
 
 Spesifikasi produk lengkap: [`PRD_Pantau_Bergizi_V2_1.md`](PRD_Pantau_Bergizi_V2_1.md).

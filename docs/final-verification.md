@@ -5,7 +5,7 @@ Pembaruan 11 November 2026. [PRD dan checklist penerimaan](../PRD_Pantau_Bergizi
 ## Status fitur
 
 - #3, #4, #5, #6, dan #8 ditutup di GitHub. Hasil uji skala lima alur ada di [README](../README.md#bukti-skala-nasional).
-- #7 sudah masuk ke `main`. Halaman Data dan Metode tersedia di deployment. Catat persetujuan teks Indonesia dari Praffi sebelum menutup issue. Teks Metode ditulis ulang menjadi Tanya Pantau di #19, jadi persetujuan juga mencakup teks itu. [Issue #7](https://github.com/MakeAnythingg/pantau-bergizi/issues/7) · [PR #15](https://github.com/MakeAnythingg/pantau-bergizi/pull/15)
+- #7 ditutup di GitHub. Halaman Data dan Metode tersedia di deployment. [Issue #7](https://github.com/MakeAnythingg/pantau-bergizi/issues/7) · [PR #15](https://github.com/MakeAnythingg/pantau-bergizi/pull/15)
 - #9 mencakup pengumpulan berkas lomba, uji pengguna di HP, dan verifikasi pada deployment.
 - #19 mendesain ulang tampilan seluruh aplikasi dan sudah masuk ke `main`. [PR #19](https://github.com/MakeAnythingg/pantau-bergizi/pull/19)
 
