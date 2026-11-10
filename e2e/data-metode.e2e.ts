@@ -8,12 +8,13 @@ test("Metode shows the current Prioritas rule and emergency number", async ({ pa
   await page.goto("/metode");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Metode");
-  await expect(
-    page.getByText(`≥${PRIORITY_MIN_HEALTH_REPORTS} keluhan kesehatan dari ≥${PRIORITY_MIN_SCHOOLS} sekolah`, {
-      exact: false,
-    }),
-  ).toBeVisible();
   const help = page.getByRole("link", { name: "119", exact: true });
+  await expect(help).toBeVisible();
+
+  await page.getByRole("button", { name: "Kapan dapur jadi Prioritas?" }).click();
+  const chat = page.getByRole("log", { name: "Tanya Pantau" });
+  await expect(chat).toContainText(`≥${PRIORITY_MIN_HEALTH_REPORTS} keluhan kesehatan`);
+  await expect(chat).toContainText(`dari ≥${PRIORITY_MIN_SCHOOLS} sekolah`);
   await expect(help).toBeVisible();
   await expect(help).toHaveAttribute("href", "tel:119");
 });
