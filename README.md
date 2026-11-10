@@ -6,6 +6,8 @@ Karya untuk **Web In Action — Multimedia In Action (MIA) 2026**. Subtema utama
 
 **Demo langsung:** https://pantau-bergizi.vercel.app
 
+**First Draft MIA 2026:** [snapshot kode dan README pada tag `first-draft`](https://github.com/MakeAnythingg/pantau-bergizi/tree/first-draft). [Checklist pengumpulan dan verifikasi Final](https://github.com/MakeAnythingg/pantau-bergizi/issues/9).
+
 > **Data simulasi.** Semua dapur, sekolah, laporan, dan menu di "Kota Sukamaju" adalah SIMULASI. Pantau Bergizi adalah platform sipil independen, bukan sistem resmi BGN.
 
 ## Tech stack
@@ -70,6 +72,8 @@ Data simulasi hari ini ditambahkan otomatis setiap hari sekitar pukul 12.00 WIB 
 bun run db:migrate && bun run db:reset --yes && bun run build && bun start
 ```
 
+Siapkan dependensi dan jalankan build saat masih terhubung ke internet agar font tersedia. Dengan PostgreSQL lokal dan hasil build tersebut, `bun start` dapat menyajikan Beranda dan Rapor saat koneksi terputus. Pengiriman laporan lewat formulir publik memerlukan koneksi ke Cloudflare Turnstile.
+
 ### Bukti skala nasional
 
 Gunakan database PostgreSQL lokal yang baru dan konfigurasi lokal dari `.env.example`. Siapkan ruang disk untuk data, indeks, dan WAL. Seed mengisi 30.000 SPPG di 500 wilayah, 300.000 sekolah, dan 5 juta laporan dalam 30 hari, lengkap dengan menu, episode, dan tanggapan. Seed menolak database yang sudah berisi SPPG. Kedua skrip skala hanya menerima `DATABASE_URL` dengan host `localhost` dan menolak eksekusi di CI.
@@ -114,7 +118,7 @@ Kelima alur memenuhi target pada ketiga sampel. Semua statement pada sampel pert
 - [x] Tes end-to-end Playwright
 - [x] Halaman sekolah: QR cetak A4, bagikan ke WhatsApp, tabel rapor per menu
 - [x] Form lapor dua jalur via QR + kode lacak (`/lacak`), Turnstile, batas per perangkat dan per IP
-- [ ] Aturan sinyal + episode Prioritas
+- [x] Aturan sinyal + episode Prioritas: pembukaan, tinjauan, riwayat, dan penutupan
 - [x] Dasbor moderator dan pengelola SPPG
 - [x] Halaman Data nasional dan Metode
 - [x] Bukti skala nasional untuk lima alur kueri
