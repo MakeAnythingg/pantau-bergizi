@@ -2,6 +2,7 @@ import { CaretDownIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getDb } from "@/db";
 import { episodeTime } from "@/db/episodes";
 import {
@@ -19,6 +20,7 @@ import { moderatorAction } from "./actions";
 import { DashboardForm } from "./dashboard-form";
 import { DashboardHeader, NoteField, Pagination, Panel } from "./dashboard-layout";
 import { DialogAction } from "./dialog-action";
+import { Inbox } from "./inbox";
 import { isTeacherGroup, LOCATION, PROBLEMS, ReplyList, ROLES, SYMPTOMS } from "./report-card";
 
 type Candidate = NonNullable<Awaited<ReturnType<typeof getStaffReport>>>["candidates"][number];
@@ -34,8 +36,6 @@ const FORWARDING = {
   simulated_puskesmas: "Simulasi Puskesmas",
   forwarded_by_officer: "Diteruskan oleh petugas",
 };
-
-const selectClass = "w-full min-w-0 rounded-md border border-input bg-background p-2 text-sm";
 
 const ago = (minutes: number) =>
   minutes < 60
@@ -144,19 +144,28 @@ function ReportActions({ item, candidates = [] }: { item: StaffReport; candidate
           action={moderatorAction.bind(null, { kind: "merge", ...target })}
           label="Gabung"
         >
-          <label className="grid w-full gap-1 text-sm">
-            Laporan induk
-            <select name="targetId" required defaultValue="" className={selectClass}>
-              <option value="" disabled>
-                Pilih laporan induk
-              </option>
-              {candidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  #{candidate.id} · {episodeTime(candidate.at)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid w-full gap-1 text-sm">
+            <label htmlFor={`merge-target-${item.id}`}>Laporan induk</label>
+            <Select
+              name="targetId"
+              required
+              items={candidates.map((candidate) => ({
+                value: String(candidate.id),
+                label: `#${candidate.id} · ${episodeTime(candidate.at)}`,
+              }))}
+            >
+              <SelectTrigger id={`merge-target-${item.id}`} className="w-full">
+                <SelectValue placeholder="Pilih laporan induk" />
+              </SelectTrigger>
+              <SelectContent>
+                {candidates.map((candidate) => (
+                  <SelectItem key={candidate.id} value={String(candidate.id)}>
+                    #{candidate.id} · {episodeTime(candidate.at)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </DialogAction>
       )}
       <DialogAction
@@ -272,16 +281,21 @@ function EpisodeHeader({ episode, kitchenName }: { episode: OpenEpisode; kitchen
           action={forward}
           label="Simpan penerusan"
         >
-          <label className="grid w-full gap-1 text-sm">
-            Status penerusan
-            <select name="forwarding" className={selectClass} defaultValue={episode.forwarding}>
-              {Object.entries(FORWARDING).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid w-full gap-1 text-sm">
+            <label htmlFor={`forwarding-${episode.id}`}>Status penerusan</label>
+            <Select name="forwarding" defaultValue={episode.forwarding} items={FORWARDING}>
+              <SelectTrigger id={`forwarding-${episode.id}`} className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(FORWARDING).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <NoteField
             label="Catatan penerusan (wajib jika diteruskan oleh petugas)"
             required={false}
@@ -410,92 +424,125 @@ export async function ModeratorDashboard({
           <h2 className="text-base font-semibold">Antrean per dapur</h2>
           <span className="text-xs text-ink-3">Prioritas dan laporan Guru/UKS di atas</span>
         </div>
-        {groups.length === 0 && (
-          <p className="surface p-6 text-center text-sm text-muted-foreground">
-            Tidak ada laporan yang menunggu tinjauan.
-          </p>
-        )}
-        <div className="grid items-start gap-4 lg:grid-cols-2">
-          {groups.map((group) => (
-            <KitchenGroup key={group.sppgId} group={group} now={now} />
-          ))}
-        </div>
-        <Pagination
-          page={queuePage}
-          hasMore={queue.hasMore}
-          parameter="antrean"
-          other={{ name: "tindak-lanjut", page: followPage }}
+        <Inbox
+          kitchens={groups.map((group) => ({
+            key: `dapur-${group.sppgId}`,
+            label: group.kitchenName,
+            hint: group.items.some(isTeacherGroup) ? "Guru/UKS menunggu" : group.episode ? "Prioritas" : undefined,
+            count: String(group.items.length),
+            pane: <KitchenGroup group={group} now={now} />,
+          }))}
+          footer={
+            (queuePage > 1 || queue.hasMore) && (
+              <Pagination
+                page={queuePage}
+                hasMore={queue.hasMore}
+                parameter="antrean"
+                other={{ name: "tindak-lanjut", page: followPage }}
+              />
+            )
+          }
+          lists={[
+            {
+              key: "tindak-lanjut",
+              label: "Dalam tindak lanjut",
+              count: more(followUp.items.length, followUp.hasMore),
+              pane: (
+                <section aria-label="Dalam tindak lanjut" className="surface overflow-hidden">
+                  <h2 className="px-4 py-3 font-heading text-lg font-extrabold">Dalam tindak lanjut</h2>
+                  {followUp.items.length === 0 && (
+                    <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                      Tidak ada laporan di halaman ini.
+                    </p>
+                  )}
+                  {followUp.items.map((item) => (
+                    <ReportRow key={item.id} item={item} now={now} />
+                  ))}
+                  <div className="px-4 py-3">
+                    <Pagination
+                      page={followPage}
+                      hasMore={followUp.hasMore}
+                      parameter="tindak-lanjut"
+                      other={{ name: "antrean", page: queuePage }}
+                    />
+                  </div>
+                </section>
+              ),
+            },
+            {
+              key: "lonjakan",
+              label: "Ditandai lonjakan",
+              count: String(surges.length),
+              pane: (
+                <Panel title="Ditandai lonjakan">
+                  {surges.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Tidak ada lonjakan dalam 24 jam terakhir.</p>
+                  )}
+                  {surges.map((item) => (
+                    <div key={item.ids[0]} className="space-y-1 rounded-lg bg-well p-3 text-sm">
+                      <p className="font-medium">
+                        {item.count} laporan · {item.schools.join(", ")}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {episodeTime(new Date(item.startAt))} – {episodeTime(new Date(item.endAt))}
+                      </p>
+                      <p className="flex flex-wrap gap-2">
+                        {item.ids.map((id) => (
+                          <Link key={id} className="underline" href={`/dasbor?laporan=${id}`}>
+                            #{id}
+                          </Link>
+                        ))}
+                      </p>
+                    </div>
+                  ))}
+                </Panel>
+              ),
+            },
+            ...(episodes.closed.length > 0
+              ? [
+                  {
+                    key: "ditutup",
+                    label: "Episode ditutup",
+                    count: String(episodes.closed.length),
+                    pane: (
+                      <Panel title="Episode terakhir ditutup">
+                        {episodes.closed.map((item) => (
+                          <div className="rounded-lg bg-well p-3 text-sm" key={item.id}>
+                            <p className="font-medium">{item.kitchenName}</p>
+                            {item.closedAt && <p className="text-muted-foreground">{episodeTime(item.closedAt)}</p>}
+                            <p className="break-words">{item.note}</p>
+                          </div>
+                        ))}
+                      </Panel>
+                    ),
+                  },
+                ]
+              : []),
+            ...(getEnv().DEMO_MODE
+              ? [
+                  {
+                    key: "reset",
+                    label: "Reset demo",
+                    pane: (
+                      <Panel title="Reset data demo">
+                        <DashboardForm
+                          action={moderatorAction.bind(null, { kind: "reset" })}
+                          label="Reset data demo"
+                          danger
+                        >
+                          <label htmlFor="reset-confirmation" className="grid w-full max-w-md gap-1 text-sm">
+                            Ketik RESET untuk mengembalikan data ke kondisi awal demo
+                            <Input id="reset-confirmation" name="confirmation" required autoComplete="off" />
+                          </label>
+                        </DashboardForm>
+                      </Panel>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
         />
       </section>
-
-      <div className="mt-8 grid items-start gap-4 lg:grid-cols-3">
-        <section aria-label="Dalam tindak lanjut" className="surface overflow-hidden lg:col-span-2">
-          <h2 className="px-4 py-3 text-base font-semibold">Dalam tindak lanjut</h2>
-          {followUp.items.length === 0 && (
-            <p className="border-t px-4 py-3 text-sm text-muted-foreground">Tidak ada laporan di halaman ini.</p>
-          )}
-          {followUp.items.map((item) => (
-            <ReportRow key={item.id} item={item} now={now} />
-          ))}
-          <div className="px-4 py-3">
-            <Pagination
-              page={followPage}
-              hasMore={followUp.hasMore}
-              parameter="tindak-lanjut"
-              other={{ name: "antrean", page: queuePage }}
-            />
-          </div>
-        </section>
-
-        <div className="grid gap-4">
-          <Panel title="Ditandai lonjakan">
-            {surges.length === 0 && (
-              <p className="text-sm text-muted-foreground">Tidak ada lonjakan dalam 24 jam terakhir.</p>
-            )}
-            {surges.map((item) => (
-              <div key={item.ids[0]} className="space-y-1 rounded-lg bg-well p-3 text-sm">
-                <p className="font-medium">
-                  {item.count} laporan · {item.schools.join(", ")}
-                </p>
-                <p className="text-muted-foreground">
-                  {episodeTime(new Date(item.startAt))} – {episodeTime(new Date(item.endAt))}
-                </p>
-                <p className="flex flex-wrap gap-2">
-                  {item.ids.map((id) => (
-                    <Link key={id} className="underline" href={`/dasbor?laporan=${id}`}>
-                      #{id}
-                    </Link>
-                  ))}
-                </p>
-              </div>
-            ))}
-          </Panel>
-          {episodes.closed.length > 0 && (
-            <Panel title="Episode terakhir ditutup">
-              {episodes.closed.map((item) => (
-                <div className="rounded-lg bg-well p-3 text-sm" key={item.id}>
-                  <p className="font-medium">{item.kitchenName}</p>
-                  {item.closedAt && <p className="text-muted-foreground">{episodeTime(item.closedAt)}</p>}
-                  <p className="break-words">{item.note}</p>
-                </div>
-              ))}
-            </Panel>
-          )}
-        </div>
-      </div>
-
-      {getEnv().DEMO_MODE && (
-        <div className="mt-8 max-w-md">
-          <Panel title="Reset data demo">
-            <DashboardForm action={moderatorAction.bind(null, { kind: "reset" })} label="Reset data demo" danger>
-              <label htmlFor="reset-confirmation" className="grid w-full gap-1 text-sm">
-                Ketik RESET untuk mengembalikan data ke kondisi awal demo
-                <Input id="reset-confirmation" name="confirmation" required autoComplete="off" />
-              </label>
-            </DashboardForm>
-          </Panel>
-        </div>
-      )}
     </>
   );
 }

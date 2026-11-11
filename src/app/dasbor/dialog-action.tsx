@@ -1,7 +1,15 @@
 "use client";
 
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import type { DashboardResult } from "./actions";
 import { DashboardForm } from "./dashboard-form";
 
@@ -23,55 +31,31 @@ export function DialogAction({
   danger?: boolean;
   children?: ReactNode;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
 
   return (
-    <>
-      <Button
-        type="button"
-        size="sm"
-        variant={danger ? "destructive" : "outline"}
-        onClick={() => {
-          dialog.current?.showModal();
-        }}
-      >
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button type="button" size="sm" variant={danger ? "destructive" : "outline"} />}>
         {trigger}
-      </Button>
-      <dialog
-        ref={dialog}
-        aria-label={title}
-        className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-[28px] bg-card p-0 text-foreground shadow-xl backdrop:bg-ink/30"
-      >
-        <div className="grid gap-3 p-5">
-          <div>
-            <h2 className="font-heading text-xl font-extrabold">{title}</h2>
-            {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
-          </div>
-          <DashboardForm
-            action={action}
-            label={label}
-            danger={danger}
-            primary
-            onSaved={() => {
-              dialog.current?.close();
-            }}
-            cancel={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  dialog.current?.close();
-                }}
-              >
-                Batal
-              </Button>
-            }
-          >
-            {children}
-          </DashboardForm>
+      </DialogTrigger>
+      <DialogContent showCloseButton={false} className="gap-3 rounded-[28px] bg-card p-5 text-foreground sm:max-w-md">
+        <div>
+          <DialogTitle className="text-xl leading-tight font-extrabold">{title}</DialogTitle>
+          {description && <DialogDescription className="mt-1">{description}</DialogDescription>}
         </div>
-      </dialog>
-    </>
+        <DashboardForm
+          action={action}
+          label={label}
+          danger={danger}
+          primary
+          onSaved={() => {
+            setOpen(false);
+          }}
+          cancel={<DialogClose render={<Button type="button" variant="ghost" size="sm" />}>Batal</DialogClose>}
+        >
+          {children}
+        </DashboardForm>
+      </DialogContent>
+    </Dialog>
   );
 }

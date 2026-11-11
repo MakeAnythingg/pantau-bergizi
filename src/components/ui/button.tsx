@@ -2,21 +2,22 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "cn";
 
-// Pressable look (Campuran style): a thicker bottom edge that flattens when pressed, so the button visibly sinks.
-// `--btn` is the fill colour, so solid variants share one recipe.
+// Pressable look (Campuran style): a bottom edge that flattens when pressed, so the button visibly sinks.
+// The edge is a box-shadow, not a border-bottom: a coloured bottom border meeting transparent side borders
+// renders as tapered wedges at the rounded corners. `--btn` is the fill, `--btn-edge` the edge colour.
 const press =
-  "border-b-[3px] active:not-aria-[haspopup]:translate-y-[2px] active:not-aria-[haspopup]:border-b disabled:translate-y-0";
+  "shadow-[0_3px_0_var(--btn-edge)] active:not-aria-[haspopup]:translate-y-[2px] active:not-aria-[haspopup]:shadow-[0_1px_0_var(--btn-edge)] disabled:translate-y-0";
 
-const solid = `border-transparent border-b-[color-mix(in_oklab,var(--btn),black_35%)] bg-(--btn) text-white hover:brightness-110 ${press}`;
+const solid = `[--btn-edge:color-mix(in_oklab,var(--btn),black_35%)] bg-(--btn) text-white hover:brightness-110 ${press}`;
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-bold whitespace-nowrap transition-[transform,border-width,background-color,filter] duration-100 ease-out outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-sm font-bold whitespace-nowrap transition-[transform,box-shadow,background-color,filter] duration-100 ease-out outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: `[--btn:var(--primary)] ${solid}`,
         danger: `[--btn:var(--destructive)] ${solid}`,
-        outline: `border-transparent border-b-cup bg-card text-ink shadow-sm hover:bg-well aria-expanded:bg-well ${press}`,
+        outline: `[--btn-edge:var(--color-cup)] bg-card text-ink hover:bg-well aria-expanded:bg-well ${press}`,
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
