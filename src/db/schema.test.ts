@@ -61,7 +61,7 @@ test("response with both report_id and episode_id is rejected", async () => {
 test("menu is unique per sppg per served_on", async () => {
   const db = await getTestDb();
   const s = await insertSppg();
-  const row = { sppgId: s.id, servedOn: "2026-10-29", name: "Nasi ayam", composition: "Nasi, ayam" };
+  const row = { sppgId: s.id, servedOn: "2026-10-29", name: "Nasi ayam", staple: "Nasi", protein: "Ayam" };
   await db.insert(menu).values(row);
   await expect(db.insert(menu).values(row).execute()).rejects.toThrow();
 });

@@ -47,8 +47,8 @@ try {
     const { id: firstSchool } = one(await tx.execute<{ id: number }>(sql`select min(id) as id from school`));
 
     await tx.execute(sql`
-      insert into menu (sppg_id, served_on, name, composition)
-      select id, ${today}::date - day, 'Menu Simulasi ' || day, 'Nasi, lauk, sayur, buah'
+      insert into menu (sppg_id, served_on, name, staple, protein, vegetable, fruit)
+      select id, ${today}::date - day, 'Menu Simulasi ' || day, 'Nasi', 'Lauk', 'Sayur', 'Buah'
       from sppg cross join generate_series(0, 6) day
     `);
     await tx.execute(sql`

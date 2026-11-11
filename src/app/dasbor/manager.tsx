@@ -2,10 +2,10 @@ import { CheckIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { getDb } from "@/db";
 import { getManagerDashboard } from "@/db/staff";
 import { formatDayWIB, formatTimeWIB, hoursSince, todayWIB, wibTime } from "@/lib/date";
+import { PLATE, PLATE_SLOT_MAX_CHARS } from "@/lib/menu";
 import { STATUS_LABEL } from "@/lib/status";
 import { NOTE_MAX_CHARS } from "@/lib/thresholds";
 import { cn } from "@/lib/utils";
@@ -80,17 +80,24 @@ function MenuFields({ menu }: { menu: Dashboard["todayMenu"] }) {
         Nama menu
         <Input id="menu-name" name="name" required maxLength={NOTE_MAX_CHARS} defaultValue={menu?.name} />
       </label>
-      <label htmlFor="menu-composition" className="grid w-full gap-1 text-sm font-medium">
-        Komposisi
-        <Textarea
-          id="menu-composition"
-          name="composition"
-          required
-          maxLength={NOTE_MAX_CHARS}
-          rows={2}
-          defaultValue={menu?.composition}
-        />
-      </label>
+      <div className="grid w-full gap-3 sm:grid-cols-2">
+        {PLATE.map((slot) => (
+          <label key={slot.key} htmlFor={`menu-${slot.key}`} className="grid gap-1 text-sm font-medium">
+            <span>
+              {slot.label}
+              {!slot.required && <span className="font-normal text-ink-3"> (boleh kosong)</span>}
+            </span>
+            <Input
+              id={`menu-${slot.key}`}
+              name={slot.key}
+              required={slot.required}
+              maxLength={PLATE_SLOT_MAX_CHARS}
+              placeholder={slot.placeholder}
+              defaultValue={menu?.[slot.key]}
+            />
+          </label>
+        ))}
+      </div>
     </>
   );
 }
@@ -193,7 +200,10 @@ export async function ManagerDashboard({ now, sppgId, page }: { now: Date; sppgI
         summary={
           todayMenu && (
             <p>
-              <b className="text-ink">{todayMenu.name}</b> · {todayMenu.composition}
+              <b className="text-ink">{todayMenu.name}</b> ·{" "}
+              {PLATE.map((slot) => todayMenu[slot.key])
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           )
         }
@@ -209,7 +219,8 @@ export async function ManagerDashboard({ now, sppgId, page }: { now: Date; sppgI
         }
       >
         <p className="text-sm text-ink-2">
-          Menu tampil di halaman sekolah dan Rapor, agar pelapor menilai menu yang benar.
+          Menu tampil di halaman sekolah dan Rapor, agar pelapor menilai menu yang benar. Isi sesuai piring: kotak yang
+          kosong tampil “Tidak ada” di Rapor.
         </p>
         <DashboardForm action={menuAction} label="Simpan menu" primary>
           <MenuFields menu={todayMenu} />

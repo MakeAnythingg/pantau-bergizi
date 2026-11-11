@@ -1,6 +1,7 @@
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { audit } from "@/lib/audit";
 import { todayWIB } from "@/lib/date";
+import { PLATE, type Plate, PLATE_SLOT_MAX_CHARS } from "@/lib/menu";
 import { NOTE_MAX_CHARS } from "@/lib/thresholds";
 import { closeEpisode, lockKitchen, syncEpisode } from "./episodes";
 import { type Db, one, type Tx } from "./index";
@@ -26,6 +27,22 @@ function requiredText(value: string) {
   }
 
   return text;
+}
+
+function plateText(plate: Plate): Plate {
+  const trimmed = { ...plate };
+
+  for (const { key, label, required } of PLATE) {
+    const text = plate[key].trim();
+
+    if ((required && !text) || text.length > PLATE_SLOT_MAX_CHARS) {
+      throw new StaffError(`Isi ${label.toLowerCase()} dengan ${required ? 1 : 0}–${PLATE_SLOT_MAX_CHARS} karakter.`);
+    }
+
+    trimmed[key] = text;
+  }
+
+  return trimmed;
 }
 
 async function lockReport(tx: Tx, id: number, owner?: number | null) {
@@ -259,10 +276,10 @@ export async function updateTodayMenu(
   sppgId: number,
   servedOn: string,
   name: string,
-  composition: string,
+  plate: Plate,
 ) {
   if (actor.sppgId !== sppgId) throw new StaffError("Menu tidak tersedia.");
-  const after = { name: requiredText(name), composition: requiredText(composition) };
+  const after = { name: requiredText(name), ...plateText(plate) };
 
   await db.transaction(async (tx) => {
     await lockKitchen(tx, sppgId);
@@ -271,7 +288,14 @@ export async function updateTodayMenu(
     if (servedOn !== todayWIB(now)) throw new StaffError("Hanya menu hari ini yang bisa diubah.");
 
     const [before] = await tx
-      .select({ name: menu.name, composition: menu.composition })
+      .select({
+        name: menu.name,
+        staple: menu.staple,
+        protein: menu.protein,
+        vegetable: menu.vegetable,
+        fruit: menu.fruit,
+        milk: menu.milk,
+      })
       .from(menu)
       .where(and(eq(menu.sppgId, sppgId), eq(menu.servedOn, servedOn)));
 

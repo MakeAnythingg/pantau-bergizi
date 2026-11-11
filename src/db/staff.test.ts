@@ -1,6 +1,7 @@
 import { beforeEach, expect, test } from "bun:test";
 import { desc, eq } from "drizzle-orm";
 import { addDays, todayWIB } from "@/lib/date";
+import { PLATE_SLOT_MAX_CHARS } from "@/lib/menu";
 import { getRapor } from "./board";
 import { getOpenEpisodes } from "./episodes";
 import { one } from "./index";
@@ -268,20 +269,33 @@ test("manager ownership, audit rollback, later reporter updates and report compl
   expect(await statusOf(id)).toBe("closed");
 });
 
+const plate = { staple: "Nasi", protein: "Ayam goreng", vegetable: "Tumis buncis", fruit: "Pisang", milk: "" };
+
 test("today's menu upserts with audit and demo reset records its moderator", async () => {
   const { db, now, day, kitchen, other, moderator, manager, latestAudit } = await fixture();
-  await expect(updateTodayMenu(db, manager, other.id, day, "Nasi", "Nasi putih")).rejects.toThrow("tidak tersedia");
-  await expect(updateTodayMenu(db, manager, kitchen.id, addDays(day, -1), "Nasi", "Nasi putih")).rejects.toThrow(
-    "hari ini",
-  );
-  await updateTodayMenu(db, manager, kitchen.id, day, "Nasi", "Nasi putih");
-  await updateTodayMenu(db, manager, kitchen.id, day, "Nasi sayur", "Nasi dan sayur");
+  await expect(updateTodayMenu(db, manager, other.id, day, "Nasi", plate)).rejects.toThrow("tidak tersedia");
+  await expect(updateTodayMenu(db, manager, kitchen.id, addDays(day, -1), "Nasi", plate)).rejects.toThrow("hari ini");
+  await updateTodayMenu(db, manager, kitchen.id, day, "Nasi", plate);
+  await updateTodayMenu(db, manager, kitchen.id, day, "Nasi sayur", { ...plate, fruit: "Jeruk" });
   expect(one(await db.select().from(menu))).toMatchObject({ name: "Nasi sayur", servedOn: day });
   expect(await latestAudit()).toMatchObject({
     action: "menu.updated",
-    before: { name: "Nasi" },
-    after: { name: "Nasi sayur" },
+    before: { name: "Nasi", fruit: "Pisang" },
+    after: { name: "Nasi sayur", fruit: "Jeruk" },
   });
   await resetDb(db, now, moderator.uid);
   expect(await latestAudit()).toMatchObject({ action: "demo.reset", actorUserId: moderator.uid });
+});
+
+test("menu slots: staple and protein are required, the rest may be empty, all are trimmed and capped", async () => {
+  const { db, day, kitchen, manager } = await fixture();
+
+  const save = (slots: Partial<typeof plate>) =>
+    updateTodayMenu(db, manager, kitchen.id, day, "Nasi ayam", { ...plate, ...slots });
+
+  await expect(save({ staple: " " })).rejects.toThrow("makanan pokok");
+  await expect(save({ protein: "" })).rejects.toThrow("lauk pauk");
+  await expect(save({ fruit: "x".repeat(PLATE_SLOT_MAX_CHARS + 1) })).rejects.toThrow("buah");
+  await save({ protein: "  Ayam goreng ", vegetable: "", fruit: "" });
+  expect(one(await db.select().from(menu))).toMatchObject({ protein: "Ayam goreng", vegetable: "", fruit: "" });
 });

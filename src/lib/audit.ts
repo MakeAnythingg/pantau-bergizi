@@ -1,5 +1,6 @@
 import type { DbOrTx } from "@/db";
 import { auditLog, type episode, type report } from "@/db/schema";
+import type { Plate } from "@/lib/menu";
 
 type AuditAction = (typeof auditLog.$inferInsert)["action"];
 
@@ -18,7 +19,7 @@ type ReportStatus = Pick<typeof report.$inferSelect, "status" | "rejectReason">;
 
 type Forwarding = Pick<typeof episode.$inferSelect, "forwarding" | "forwardingNote">;
 
-type MenuContent = { name: string; composition: string };
+type MenuContent = { name: string } & Plate;
 
 type AuditEvents = EveryAction<{
   "demo.reset": { entity: "database"; entityId: null; before: null; after: { seededFor: string } };

@@ -7,6 +7,7 @@ import { getRapor, type Rapor } from "@/db/board";
 import { episodeTime } from "@/db/episodes";
 import { getDb } from "@/db/index";
 import { addDays, formatDayWIB, formatTimeWIB, formatWeekdayWIB, hoursSince, todayWIB } from "@/lib/date";
+import { PLATE } from "@/lib/menu";
 import { requestNow } from "@/lib/now";
 import { STATUS_LABEL, type Status } from "@/lib/status";
 import { LEFTOVER_MIN_REPORTS } from "@/lib/thresholds";
@@ -135,16 +136,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
           {menu ? (
             <>
               <p className="font-heading text-[26px] leading-tight font-extrabold tracking-tight">{menu.name}</p>
-              <ul className="my-3 flex flex-wrap gap-1.5">
-                {menu.composition.split(",").map((item) => (
-                  <li
-                    key={item}
-                    className="rounded-full first-letter:uppercase bg-white px-3 py-1 text-[13px] font-medium shadow-sm"
-                  >
-                    {item.trim()}
-                  </li>
-                ))}
-              </ul>
+              <Ompreng menu={menu} />
               <p className="text-[13px] text-ink-3">Diperbarui pukul {formatTimeWIB(menu.updatedAt)}</p>
             </>
           ) : (
@@ -156,7 +148,7 @@ async function RaporView({ params }: Pick<PageProps<"/sppg/[id]">, "params">) {
             rel="noopener noreferrer"
             className="mt-2 inline-block border-b-[1.5px] border-navy/30 font-bold text-navy"
           >
-            Bandingkan di Radar MBG ↗
+            Angka gizi dari dapur: Radar MBG ↗
           </a>
         </Cell>
 
@@ -364,6 +356,38 @@ function Cell({ title, className, children }: { title: string; className?: strin
       <h3 className="mb-3 text-[13px] font-bold text-ink-2">{title}</h3>
       {children}
     </section>
+  );
+}
+
+/** The meal tray: staple fills the tall compartment, the rest share a 2×2 grid. Empty slots stay visible. */
+function Ompreng({ menu }: { menu: NonNullable<Rapor["menu"]> }) {
+  return (
+    <dl className="my-3 grid grid-cols-2 gap-1.5 rounded-[18px] bg-cup/70 p-1.5 sm:grid-cols-[1.25fr_1fr_1fr] sm:grid-rows-2">
+      {PLATE.map(({ key, label }) => {
+        const value = menu[key];
+
+        return (
+          <div
+            key={key}
+            className={cn(
+              "rounded-[13px] px-3 py-2.5",
+              value ? "bg-white" : "fill-no_data",
+              key === "staple" && "col-span-2 sm:col-span-1 sm:row-span-2",
+            )}
+          >
+            <dt className="text-[11px] font-bold tracking-wide text-ink-3 uppercase">{label}</dt>
+            <dd
+              className={cn(
+                "mt-0.5 text-sm leading-snug",
+                value ? "font-semibold first-letter:uppercase" : "text-ink-3",
+              )}
+            >
+              {value || "Tidak ada"}
+            </dd>
+          </div>
+        );
+      })}
+    </dl>
   );
 }
 
