@@ -1,14 +1,14 @@
 import type { Status } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-/** The ompreng (lunch tray) mark: one red compartment, two empty. */
+/** A lens over an Isi Piringku plate. Same geometry as app/icon.svg, minus its dark-tab halo. */
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 30 22" aria-hidden="true" className={cn("h-[22px] w-[30px]", className)}>
-      <rect x="1" y="1" width="28" height="20" rx="6" fill="#F4F6F8" stroke="#18242C" strokeWidth="1.6" />
-      <rect x="4.5" y="4.5" width="10" height="13" rx="3" fill="#B3312A" />
-      <rect x="17" y="4.5" width="8.5" height="5.5" rx="2.4" fill="#D3DAE0" />
-      <rect x="17" y="12" width="8.5" height="5.5" rx="2.4" fill="#D3DAE0" />
+    <svg viewBox="0 0 32 32" aria-hidden="true" className={cn("size-6", className)}>
+      <path d="M22.2 22.2 28.6 28.6" stroke="#18242C" strokeWidth="4.4" strokeLinecap="round" />
+      <circle cx="13" cy="13" r="11" fill="#F4F6F8" stroke="#18242C" strokeWidth="2.8" />
+      <path d="M12.1 5.35A7.7 7.7 0 0 0 12.1 20.65Z" fill="#B3312A" />
+      <path d="M13.9 12.1V5.35A7.7 7.7 0 0 1 20.65 12.1ZM13.9 13.9H20.65A7.7 7.7 0 0 1 13.9 20.65Z" fill="#C9D1D8" />
     </svg>
   );
 }
