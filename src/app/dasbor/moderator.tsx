@@ -20,6 +20,7 @@ import { moderatorAction } from "./actions";
 import { DashboardForm } from "./dashboard-form";
 import { DashboardHeader, NoteField, Pagination, Panel } from "./dashboard-layout";
 import { DialogAction } from "./dialog-action";
+import { Inbox } from "./inbox";
 import { isTeacherGroup, LOCATION, PROBLEMS, ReplyList, ROLES, SYMPTOMS } from "./report-card";
 
 type Candidate = NonNullable<Awaited<ReturnType<typeof getStaffReport>>>["candidates"][number];
@@ -322,10 +323,7 @@ function KitchenGroup({ group, now }: { group: Group; now: Date }) {
   return (
     <section
       aria-label={group.kitchenName}
-      className={cn(
-        "surface mb-4 break-inside-avoid overflow-hidden",
-        (group.episode || teacher) && "ring-2 ring-alarm/30",
-      )}
+      className={cn("surface overflow-hidden", (group.episode || teacher) && "ring-2 ring-alarm/30")}
     >
       <header className={cn("px-4 py-3", group.episode || teacher ? "bg-alarm-soft" : "bg-well")}>
         <div className="flex items-baseline justify-between gap-3">
@@ -426,90 +424,125 @@ export async function ModeratorDashboard({
           <h2 className="text-base font-semibold">Antrean per dapur</h2>
           <span className="text-xs text-ink-3">Prioritas dan laporan Guru/UKS di atas</span>
         </div>
-        {groups.length === 0 && (
-          <p className="surface p-6 text-center text-sm text-muted-foreground">
-            Tidak ada laporan yang menunggu tinjauan.
-          </p>
-        )}
-        {/* Columns, not grid rows: a short kitchen card would otherwise leave a gap beside a tall one. */}
-        <div className="-mb-4 gap-4 lg:columns-2">
-          {groups.map((group) => (
-            <KitchenGroup key={group.sppgId} group={group} now={now} />
-          ))}
-        </div>
-        <Pagination
-          page={queuePage}
-          hasMore={queue.hasMore}
-          parameter="antrean"
-          other={{ name: "tindak-lanjut", page: followPage }}
+        <Inbox
+          kitchens={groups.map((group) => ({
+            key: `dapur-${group.sppgId}`,
+            label: group.kitchenName,
+            hint: group.items.some(isTeacherGroup) ? "Guru/UKS menunggu" : group.episode ? "Prioritas" : undefined,
+            count: String(group.items.length),
+            pane: <KitchenGroup group={group} now={now} />,
+          }))}
+          footer={
+            (queuePage > 1 || queue.hasMore) && (
+              <Pagination
+                page={queuePage}
+                hasMore={queue.hasMore}
+                parameter="antrean"
+                other={{ name: "tindak-lanjut", page: followPage }}
+              />
+            )
+          }
+          lists={[
+            {
+              key: "tindak-lanjut",
+              label: "Dalam tindak lanjut",
+              count: more(followUp.items.length, followUp.hasMore),
+              pane: (
+                <section aria-label="Dalam tindak lanjut" className="surface overflow-hidden">
+                  <h2 className="px-4 py-3 font-heading text-lg font-extrabold">Dalam tindak lanjut</h2>
+                  {followUp.items.length === 0 && (
+                    <p className="border-t px-4 py-3 text-sm text-muted-foreground">
+                      Tidak ada laporan di halaman ini.
+                    </p>
+                  )}
+                  {followUp.items.map((item) => (
+                    <ReportRow key={item.id} item={item} now={now} />
+                  ))}
+                  <div className="px-4 py-3">
+                    <Pagination
+                      page={followPage}
+                      hasMore={followUp.hasMore}
+                      parameter="tindak-lanjut"
+                      other={{ name: "antrean", page: queuePage }}
+                    />
+                  </div>
+                </section>
+              ),
+            },
+            {
+              key: "lonjakan",
+              label: "Ditandai lonjakan",
+              count: String(surges.length),
+              pane: (
+                <Panel title="Ditandai lonjakan">
+                  {surges.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Tidak ada lonjakan dalam 24 jam terakhir.</p>
+                  )}
+                  {surges.map((item) => (
+                    <div key={item.ids[0]} className="space-y-1 rounded-lg bg-well p-3 text-sm">
+                      <p className="font-medium">
+                        {item.count} laporan · {item.schools.join(", ")}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {episodeTime(new Date(item.startAt))} – {episodeTime(new Date(item.endAt))}
+                      </p>
+                      <p className="flex flex-wrap gap-2">
+                        {item.ids.map((id) => (
+                          <Link key={id} className="underline" href={`/dasbor?laporan=${id}`}>
+                            #{id}
+                          </Link>
+                        ))}
+                      </p>
+                    </div>
+                  ))}
+                </Panel>
+              ),
+            },
+            ...(episodes.closed.length > 0
+              ? [
+                  {
+                    key: "ditutup",
+                    label: "Episode ditutup",
+                    count: String(episodes.closed.length),
+                    pane: (
+                      <Panel title="Episode terakhir ditutup">
+                        {episodes.closed.map((item) => (
+                          <div className="rounded-lg bg-well p-3 text-sm" key={item.id}>
+                            <p className="font-medium">{item.kitchenName}</p>
+                            {item.closedAt && <p className="text-muted-foreground">{episodeTime(item.closedAt)}</p>}
+                            <p className="break-words">{item.note}</p>
+                          </div>
+                        ))}
+                      </Panel>
+                    ),
+                  },
+                ]
+              : []),
+            ...(getEnv().DEMO_MODE
+              ? [
+                  {
+                    key: "reset",
+                    label: "Reset demo",
+                    pane: (
+                      <Panel title="Reset data demo">
+                        <DashboardForm
+                          action={moderatorAction.bind(null, { kind: "reset" })}
+                          label="Reset data demo"
+                          danger
+                        >
+                          <label htmlFor="reset-confirmation" className="grid w-full max-w-md gap-1 text-sm">
+                            Ketik RESET untuk mengembalikan data ke kondisi awal demo
+                            <Input id="reset-confirmation" name="confirmation" required autoComplete="off" />
+                          </label>
+                        </DashboardForm>
+                      </Panel>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
         />
       </section>
-
-      <div className="mt-8 grid items-start gap-4 lg:grid-cols-3">
-        <section aria-label="Dalam tindak lanjut" className="surface overflow-hidden lg:col-span-2">
-          <h2 className="px-4 py-3 text-base font-semibold">Dalam tindak lanjut</h2>
-          {followUp.items.length === 0 && (
-            <p className="border-t px-4 py-3 text-sm text-muted-foreground">Tidak ada laporan di halaman ini.</p>
-          )}
-          {followUp.items.map((item) => (
-            <ReportRow key={item.id} item={item} now={now} />
-          ))}
-          <div className="px-4 py-3">
-            <Pagination
-              page={followPage}
-              hasMore={followUp.hasMore}
-              parameter="tindak-lanjut"
-              other={{ name: "antrean", page: queuePage }}
-            />
-          </div>
-        </section>
-
-        <div className="grid gap-4">
-          <Panel title="Ditandai lonjakan">
-            {surges.length === 0 && (
-              <p className="text-sm text-muted-foreground">Tidak ada lonjakan dalam 24 jam terakhir.</p>
-            )}
-            {surges.map((item) => (
-              <div key={item.ids[0]} className="space-y-1 rounded-lg bg-well p-3 text-sm">
-                <p className="font-medium">
-                  {item.count} laporan · {item.schools.join(", ")}
-                </p>
-                <p className="text-muted-foreground">
-                  {episodeTime(new Date(item.startAt))} – {episodeTime(new Date(item.endAt))}
-                </p>
-                <p className="flex flex-wrap gap-2">
-                  {item.ids.map((id) => (
-                    <Link key={id} className="underline" href={`/dasbor?laporan=${id}`}>
-                      #{id}
-                    </Link>
-                  ))}
-                </p>
-              </div>
-            ))}
-          </Panel>
-          {episodes.closed.length > 0 && (
-            <Panel title="Episode terakhir ditutup">
-              {episodes.closed.map((item) => (
-                <div className="rounded-lg bg-well p-3 text-sm" key={item.id}>
-                  <p className="font-medium">{item.kitchenName}</p>
-                  {item.closedAt && <p className="text-muted-foreground">{episodeTime(item.closedAt)}</p>}
-                  <p className="break-words">{item.note}</p>
-                </div>
-              ))}
-            </Panel>
-          )}
-          {getEnv().DEMO_MODE && (
-            <Panel title="Reset data demo">
-              <DashboardForm action={moderatorAction.bind(null, { kind: "reset" })} label="Reset data demo" danger>
-                <label htmlFor="reset-confirmation" className="grid w-full gap-1 text-sm">
-                  Ketik RESET untuk mengembalikan data ke kondisi awal demo
-                  <Input id="reset-confirmation" name="confirmation" required autoComplete="off" />
-                </label>
-              </DashboardForm>
-            </Panel>
-          )}
-        </div>
-      </div>
     </>
   );
 }

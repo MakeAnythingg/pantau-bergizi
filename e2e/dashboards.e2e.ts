@@ -125,6 +125,10 @@ test("moderator rejection removes a health report from Rapor", async ({ page }) 
   await expect.poll(count).toBe(before + 1);
 
   await login(page, "moderator@pantaubergizi.id");
+  await page
+    .getByRole("navigation", { name: "Daftar antrean" })
+    .getByRole("button", { name: /SPPG Dahlia 03/ })
+    .click();
   const card = page.getByRole("region", { name: "Antrean tinjauan" }).getByRole("article").filter({ hasText: note });
   await card.locator("summary").click();
   await card.getByRole("button", { name: "Tolak", exact: true }).click();
@@ -145,6 +149,7 @@ test("moderator rejection removes a health report from Rapor", async ({ page }) 
 
 test("server actions refuse missing sessions and wrong roles", async ({ page, browser }) => {
   await login(page, "moderator@pantaubergizi.id");
+  await page.getByRole("navigation", { name: "Daftar antrean" }).getByRole("button", { name: "Reset demo" }).click();
   const reset = page.getByRole("region", { name: "Reset data demo" });
   await reset.getByRole("textbox").fill("reset");
 
