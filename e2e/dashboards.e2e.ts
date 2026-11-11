@@ -91,7 +91,8 @@ test("teacher group review opens Prioritas and the kitchen's episode reply reach
   await expect(kitchen).toContainText("Ditinjau moderator");
   await kitchen.getByRole("button", { name: "Penerusan" }).click();
   const forwarding = page.getByRole("dialog", { name: "Penerusan episode" });
-  await forwarding.getByLabel("Status penerusan").selectOption("simulated_puskesmas");
+  await forwarding.getByRole("combobox", { name: "Status penerusan" }).click();
+  await page.getByRole("option", { name: "Simulasi Puskesmas" }).click();
   await forwarding.getByRole("button", { name: "Simpan penerusan" }).click();
   await expect(forwarding).toBeHidden();
   await expect(kitchen.locator("span", { hasText: /^Simulasi Puskesmas$/ })).toBeVisible();

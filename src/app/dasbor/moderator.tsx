@@ -2,6 +2,7 @@ import { CaretDownIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getDb } from "@/db";
 import { episodeTime } from "@/db/episodes";
 import {
@@ -34,8 +35,6 @@ const FORWARDING = {
   simulated_puskesmas: "Simulasi Puskesmas",
   forwarded_by_officer: "Diteruskan oleh petugas",
 };
-
-const selectClass = "w-full min-w-0 rounded-md border border-input bg-background p-2 text-sm";
 
 const ago = (minutes: number) =>
   minutes < 60
@@ -144,19 +143,28 @@ function ReportActions({ item, candidates = [] }: { item: StaffReport; candidate
           action={moderatorAction.bind(null, { kind: "merge", ...target })}
           label="Gabung"
         >
-          <label className="grid w-full gap-1 text-sm">
-            Laporan induk
-            <select name="targetId" required defaultValue="" className={selectClass}>
-              <option value="" disabled>
-                Pilih laporan induk
-              </option>
-              {candidates.map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  #{candidate.id} · {episodeTime(candidate.at)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid w-full gap-1 text-sm">
+            <label htmlFor={`merge-target-${item.id}`}>Laporan induk</label>
+            <Select
+              name="targetId"
+              required
+              items={candidates.map((candidate) => ({
+                value: String(candidate.id),
+                label: `#${candidate.id} · ${episodeTime(candidate.at)}`,
+              }))}
+            >
+              <SelectTrigger id={`merge-target-${item.id}`} className="w-full">
+                <SelectValue placeholder="Pilih laporan induk" />
+              </SelectTrigger>
+              <SelectContent>
+                {candidates.map((candidate) => (
+                  <SelectItem key={candidate.id} value={String(candidate.id)}>
+                    #{candidate.id} · {episodeTime(candidate.at)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </DialogAction>
       )}
       <DialogAction
@@ -272,16 +280,21 @@ function EpisodeHeader({ episode, kitchenName }: { episode: OpenEpisode; kitchen
           action={forward}
           label="Simpan penerusan"
         >
-          <label className="grid w-full gap-1 text-sm">
-            Status penerusan
-            <select name="forwarding" className={selectClass} defaultValue={episode.forwarding}>
-              {Object.entries(FORWARDING).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid w-full gap-1 text-sm">
+            <label htmlFor={`forwarding-${episode.id}`}>Status penerusan</label>
+            <Select name="forwarding" defaultValue={episode.forwarding} items={FORWARDING}>
+              <SelectTrigger id={`forwarding-${episode.id}`} className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(FORWARDING).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <NoteField
             label="Catatan penerusan (wajib jika diteruskan oleh petugas)"
             required={false}
@@ -309,7 +322,10 @@ function KitchenGroup({ group, now }: { group: Group; now: Date }) {
   return (
     <section
       aria-label={group.kitchenName}
-      className={cn("surface overflow-hidden", (group.episode || teacher) && "ring-2 ring-alarm/30")}
+      className={cn(
+        "surface mb-4 break-inside-avoid overflow-hidden",
+        (group.episode || teacher) && "ring-2 ring-alarm/30",
+      )}
     >
       <header className={cn("px-4 py-3", group.episode || teacher ? "bg-alarm-soft" : "bg-well")}>
         <div className="flex items-baseline justify-between gap-3">
@@ -415,7 +431,8 @@ export async function ModeratorDashboard({
             Tidak ada laporan yang menunggu tinjauan.
           </p>
         )}
-        <div className="grid items-start gap-4 lg:grid-cols-2">
+        {/* Columns, not grid rows: a short kitchen card would otherwise leave a gap beside a tall one. */}
+        <div className="-mb-4 gap-4 lg:columns-2">
           {groups.map((group) => (
             <KitchenGroup key={group.sppgId} group={group} now={now} />
           ))}
@@ -481,21 +498,18 @@ export async function ModeratorDashboard({
               ))}
             </Panel>
           )}
+          {getEnv().DEMO_MODE && (
+            <Panel title="Reset data demo">
+              <DashboardForm action={moderatorAction.bind(null, { kind: "reset" })} label="Reset data demo" danger>
+                <label htmlFor="reset-confirmation" className="grid w-full gap-1 text-sm">
+                  Ketik RESET untuk mengembalikan data ke kondisi awal demo
+                  <Input id="reset-confirmation" name="confirmation" required autoComplete="off" />
+                </label>
+              </DashboardForm>
+            </Panel>
+          )}
         </div>
       </div>
-
-      {getEnv().DEMO_MODE && (
-        <div className="mt-8 max-w-md">
-          <Panel title="Reset data demo">
-            <DashboardForm action={moderatorAction.bind(null, { kind: "reset" })} label="Reset data demo" danger>
-              <label htmlFor="reset-confirmation" className="grid w-full gap-1 text-sm">
-                Ketik RESET untuk mengembalikan data ke kondisi awal demo
-                <Input id="reset-confirmation" name="confirmation" required autoComplete="off" />
-              </label>
-            </DashboardForm>
-          </Panel>
-        </div>
-      )}
     </>
   );
 }
