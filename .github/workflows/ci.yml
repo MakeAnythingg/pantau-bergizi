@@ -113,7 +113,9 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
-      - run: ./node_modules/.bin/playwright install --with-deps chromium
+      # No --with-deps: the runner image already has Chromium's system libraries, and apt mirror
+      # outages (security.ubuntu.com not resolving) were failing e2e before a single test ran.
+      - run: ./node_modules/.bin/playwright install --only-shell chromium
       # Migrates and resets the e2e DB, builds, starts, then runs the specs (see playwright.config.ts).
       - run: bun run e2e
       - if: failure()
