@@ -144,7 +144,7 @@ Postgres enums via Drizzle `pgEnum`. All timestamps `timestamptz`; `consumed_on`
 |---|---|
 | `sppg` | `id`, `name`, `district` |
 | `school` | `id`, `name`, `code` (unique, used in QR URL), `lat`, `lng`, `sppg_id` → sppg |
-| `menu` | `id`, `sppg_id`, `served_on`, `name`, `composition`, `photo_url` (nullable), `updated_at`; unique (`sppg_id`, `served_on`) |
+| `menu` | `id`, `sppg_id`, `served_on`, `name`, `staple`, `protein`, `vegetable`, `fruit`, `milk` (Isi Piringku slots, `''` = empty), `photo_url` (nullable), `updated_at`; unique (`sppg_id`, `served_on`) |
 | `report` | `id`, `school_id`, `simulated`, `reporter_role`, `kind`, `consumed_on`, `received_at`, `rating`, `leftover`, `problems[]`, `symptoms[]`, `subject`, `affected_count`, `note` (≤300), `location_check`, `status`, `reject_reason`, `duplicate_of` → report, `token_hash` (unique), `device_hash`, `ip_hash` |
 | `response` | `id`, `report_id` **or** `episode_id` (check: exactly one), `body`, `created_at`, `author_kind`, `author_user_id` (nullable) |
 | `episode` | `id`, `sppg_id`, `first_detected_at`, `rule`, `forwarding`, `forwarding_note`, `closed_at` |

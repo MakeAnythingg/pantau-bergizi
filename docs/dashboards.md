@@ -98,7 +98,7 @@ A "Reset data demo" button, rendered and accepted only when `DEMO_MODE=true`, be
 - **Open episode:** reason, detected-at, overdue timer, and an **episode response form**.
 - **Waiting for a response:** their kitchen's `reviewed` and `responded` reports whose latest non-moderator response is **not** from `sppg`. That means the report has never been answered, or the reporter added an update after the kitchen's last answer ("Ada perkembangan baru"). Each shows an "N jam" timer since `received_at` (or since the reporter's update), the thread including reporter updates, and a **report response form**.
 - **Unreviewed reports:** shown only as a count ("N laporan menunggu tinjauan moderator"), with no content.
-- **Menu today:** name + composition, upserting `menu(sppg_id, served_on = today WIB)`, and writing `menu.updated` with before/after. Any other date is refused.
+- **Menu today:** name + the five Isi Piringku slots (staple and protein required, the rest may be empty and show "Tidak ada" on the Rapor), upserting `menu(sppg_id, served_on = today WIB)`, and writing `menu.updated` with before/after. Any other date is refused.
 
 ### Responses
 

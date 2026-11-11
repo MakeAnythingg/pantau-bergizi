@@ -74,7 +74,12 @@ export const menu = pgTable(
       .references(() => sppg.id),
     servedOn: date({ mode: "string" }).notNull(),
     name: text().notNull(),
-    composition: text().notNull(),
+    // Isi Piringku slots (see PLATE in lib/menu). "" means the kitchen served nothing in that compartment.
+    staple: text().notNull().default(""),
+    protein: text().notNull().default(""),
+    vegetable: text().notNull().default(""),
+    fruit: text().notNull().default(""),
+    milk: text().notNull().default(""),
     photoUrl: text(),
     updatedAt: createdNow(),
   },

@@ -57,6 +57,13 @@
       "when": 1794278434351,
       "tag": "0007_scale_query_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794408826175,
+      "tag": "0008_menu_plate",
+      "breakpoints": true
     }
   ]
 }

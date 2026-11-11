@@ -63,14 +63,23 @@ export const SEED_SPPG: SeedSppg[] = [
   },
 ];
 
+const plate = (staple: string, protein: string, vegetable: string, fruit: string, milk = "") => ({
+  staple,
+  protein,
+  vegetable,
+  fruit,
+  milk,
+});
+
+// Nasi ayam kecap serves milk instead of fruit, so the demo shows an empty "Buah" compartment.
 export const SEED_MENUS = [
-  { name: "Nasi ayam goreng", composition: "Nasi, ayam goreng, tumis buncis, pisang" },
-  { name: "Nasi ikan bumbu kuning", composition: "Nasi, ikan tongkol bumbu kuning, sayur bayam, jeruk" },
-  { name: "Nasi telur balado", composition: "Nasi, telur balado, tumis kangkung, semangka" },
-  { name: "Nasi semur daging", composition: "Nasi, semur daging, sayur sop, pepaya" },
-  { name: "Nasi ayam kecap", composition: "Nasi, ayam kecap, capcay, susu UHT" },
-  { name: "Nasi tempe orek", composition: "Nasi, tempe orek, telur rebus, sayur asem, melon" },
-  { name: "Nasi pindang ikan", composition: "Nasi, pindang ikan, tumis wortel, pisang" },
+  { name: "Nasi ayam goreng", ...plate("Nasi", "Ayam goreng", "Tumis buncis", "Pisang") },
+  { name: "Nasi ikan bumbu kuning", ...plate("Nasi", "Ikan tongkol bumbu kuning", "Sayur bayam", "Jeruk") },
+  { name: "Nasi telur balado", ...plate("Nasi", "Telur balado", "Tumis kangkung", "Semangka") },
+  { name: "Nasi semur daging", ...plate("Nasi", "Semur daging", "Sayur sop", "Pepaya") },
+  { name: "Nasi ayam kecap", ...plate("Nasi", "Ayam kecap", "Capcay", "", "Susu UHT") },
+  { name: "Nasi tempe orek", ...plate("Nasi", "Tempe orek, telur rebus", "Sayur asem", "Melon") },
+  { name: "Nasi pindang ikan", ...plate("Nasi", "Pindang ikan", "Tumis wortel", "Pisang") },
 ] as const;
 
 export const SEED_NOTES = [

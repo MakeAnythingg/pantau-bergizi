@@ -109,7 +109,13 @@ export async function managerAction(command: ManagerCommand, _previous: Dashboar
     const db = getDb();
 
     if (command.kind === "menu") {
-      await updateTodayMenu(db, actor, command.id, command.servedOn, field(form, "name"), field(form, "composition"));
+      await updateTodayMenu(db, actor, command.id, command.servedOn, field(form, "name"), {
+        staple: field(form, "staple"),
+        protein: field(form, "protein"),
+        vegetable: field(form, "vegetable"),
+        fruit: field(form, "fruit"),
+        milk: field(form, "milk"),
+      });
 
       return;
     }
